@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<!--
+  NetPlanner — página do projeto
+  Copyright (C) 2026 Carlos Eduardo Mattos da Cruz
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetPlanner — Calculador Visual de Sub-redes IPv4/IPv6 com VLSM</title>
+<meta name="description" content="Planeje endereçamento IP visualmente: topologia hierárquica, VLSM automático, IPv4 e IPv6, sumarização de rotas, DNS e exportação JSON/PNG. Software livre (GPL-3.0+), em um único arquivo HTML, sem instalação.">
+<meta name="keywords" content="NetPlanner, sub-redes, subnet calculator, calculadora de sub-redes, VLSM, CIDR, IPv4, IPv6, máscara de rede, sumarização de rotas, redes de computadores, topologia de rede, CCNA">
+<meta name="author" content="Carlos Eduardo Mattos da Cruz">
+<meta name="creator" content="Carlos Eduardo Mattos da Cruz">
+<meta name="application-name" content="NetPlanner">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#2fbf9f">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://cadunico.art.br/sitenetplanner/">
+
+<!-- Ícones -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%232fbf9f'/%3E%3Cg fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round'%3E%3Crect x='5' y='12' width='14' height='6' rx='1.6'/%3E%3Cpath d='M15 12V8.5M18 12V9.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="512x512" href="https://cadunico.art.br/sitenetplanner/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://cadunico.art.br/sitenetplanner/apple-touch-icon.png">
+<link rel="image_src" href="https://cadunico.art.br/sitenetplanner/og-image.jpg">
+
+<!-- Open Graph: Facebook, Instagram, WhatsApp, Messenger, LinkedIn, Telegram, Discord,
+     Slack, Microsoft Teams, Skype, Signal, Pinterest, Reddit, Threads, Bluesky, Mastodon, Tumblr, VK, iMessage -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NetPlanner">
+<meta property="og:url" content="https://cadunico.art.br/sitenetplanner/">
+<meta property="og:title" content="NetPlanner — Calculador Visual de Sub-redes IPv4/IPv6 com VLSM">
+<meta property="og:description" content="Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas. Grátis, código aberto e sem instalação.">
+<meta property="og:image" content="https://cadunico.art.br/sitenetplanner/og-image.jpg">
+<meta property="og:image:secure_url" content="https://cadunico.art.br/sitenetplanner/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Interface do NetPlanner v7: topologia de rede com routers, switches e dispositivos, e painel com resumo da rede e tabela VLSM.">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:locale:alternate" content="es_ES">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="eo_EO">
+<meta property="article:author" content="Carlos Eduardo Mattos da Cruz">
+
+<!-- X (Twitter) -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NetPlanner — Calculador Visual de Sub-redes IPv4/IPv6 com VLSM">
+<meta name="twitter:description" content="Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas. Grátis, código aberto e sem instalação.">
+<meta name="twitter:image" content="https://cadunico.art.br/sitenetplanner/og-image.jpg">
+<meta name="twitter:image:alt" content="Interface do NetPlanner v7: topologia de rede com routers, switches e dispositivos, e painel com resumo da rede e tabela VLSM.">
+<meta name="twitter:url" content="https://cadunico.art.br/sitenetplanner/">
+
+<!-- Pinterest (Rich Pins usam Open Graph) e Google (microdados) -->
+<meta name="pinterest-rich-pin" content="true">
+<meta itemprop="name" content="NetPlanner — Calculador Visual de Sub-redes IPv4/IPv6 com VLSM">
+<meta itemprop="description" content="Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas. Grátis, código aberto e sem instalação.">
+<meta itemprop="image" content="https://cadunico.art.br/sitenetplanner/og-image.jpg">
+
+<!-- Windows / Edge -->
+<meta name="msapplication-TileColor" content="#2fbf9f">
+<meta name="msapplication-TileImage" content="https://cadunico.art.br/sitenetplanner/icon-512.png">
+
+<!-- Dados estruturados (Google, Bing e buscadores) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "NetPlanner",
+  "alternateName": "NetPlanner v7",
+  "softwareVersion": "7.0.0",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Network subnet calculator",
+  "operatingSystem": "Any (web browser)",
+  "browserRequirements": "Chrome/Edge 111+, Firefox 113+, Safari 16.2+",
+  "description": "Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas. Grátis, código aberto e sem instalação.",
+  "url": "https://cadunico.art.br/sitenetplanner/",
+  "image": "https://cadunico.art.br/sitenetplanner/og-image.jpg",
+  "screenshot": "https://cadunico.art.br/sitenetplanner/og-image.jpg",
+  "downloadUrl": "https://github.com/cadunico/netplanner/releases/latest",
+  "codeRepository": "https://github.com/cadunico/netplanner",
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "inLanguage": ["pt-BR", "es", "en", "eo"],
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" },
+  "author": { "@type": "Person", "name": "Carlos Eduardo Mattos da Cruz", "url": "https://github.com/cadunico" }
+}
+</script>
+<style>
+/* ===== Tokens idênticos ao NetPlanner v7 ===== */
+:root{
+  --teal:#2fbf9f; --teal-d:#22a587; --red:#e05c5c; --blue:#4a90d9;
+  --teal-l:color-mix(in srgb,var(--teal) 12%,white);
+  --ink:#3d4549; --ink-2:#7b858a; --line:#dfe5e8;
+  --bg:#eef2f3; --bg2:#f7fafa; --card:#fff; --dot:#d3dadd;
+  --sh:0 2px 6px rgba(30,45,50,.16), 0 8px 22px rgba(30,45,50,.10); --r:8px;
+  --mono:ui-monospace,Consolas,"SFMono-Regular",Menlo,monospace;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
+}
+[data-theme="dark"]{
+  --teal-l:color-mix(in srgb,var(--teal) 16%,#1e262a);
+  --ink:#e6edf0; --ink-2:#93a1a8; --line:#2c383e;
+  --bg:#141a1d; --bg2:#1a2125; --card:#1e262a; --dot:#2a343a;
+  --sh:0 2px 6px rgba(0,0,0,.5), 0 10px 26px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);line-height:1.55;min-width:280px;
+  background-image:radial-gradient(var(--dot) 1px,transparent 1.4px);background-size:24px 24px}
+a{color:var(--teal-d)}
+img{max-width:100%;display:block}
+code{font:.92em var(--mono);background:var(--teal-l);color:var(--teal-d);border-radius:4px;padding:1px 5px}
+
+/* ===== Cabeçalho (mesmo do app) ===== */
+header{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;padding:8px 14px;
+  background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.logo{font-size:15px;font-weight:700;text-decoration:none;color:var(--ink);white-space:nowrap;display:flex;align-items:center;gap:8px}
+.logo .lt span{color:var(--teal-d)}
+.logo .tag{font:800 10px/1 system-ui;letter-spacing:.5px;color:#fff;background:var(--red);border-radius:6px;padding:5px 7px}
+.spacer{flex:1}
+nav{display:flex;align-items:center;gap:4px}
+nav a{font:600 12.5px/1 system-ui;color:var(--ink);text-decoration:none;padding:9px 10px;border-radius:6px;transition:.15s;white-space:nowrap}
+nav a:hover,nav a.on{background:var(--teal-l);color:var(--teal-d)}
+select,.btn{font:600 12px/1 system-ui}
+select{border:1px solid var(--line);border-radius:6px;padding:8px 5px;background:var(--card);color:var(--ink);cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:6px;background:var(--teal);color:#fff;
+  padding:9px 12px;cursor:pointer;transition:.15s;text-decoration:none;white-space:nowrap;
+  box-shadow:0 2px 5px color-mix(in srgb,var(--teal-d) 40%,transparent)}
+.btn:hover{background:var(--teal-d);transform:translateY(-1px)}
+.btn.ghost{background:var(--card);color:var(--teal-d);border:1.5px solid var(--teal);box-shadow:none}
+.btn.ghost:hover{background:var(--teal-l)}
+.btn.mini{padding:7px 9px;font-size:11px}
+.btn.lg{padding:13px 20px;font-size:14px}
+.btn svg{width:16px;height:16px}
+#menuBtn{display:none}
+
+/* ===== Layout ===== */
+.wrap{width:min(1180px,100% - 28px);margin-inline:auto}
+section{padding:clamp(28px,5vw,56px) 0}
+.sec-title{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.sec-title h2{font-size:clamp(18px,2.6vw,24px);font-weight:800}
+.sec-title .bar{flex:1;height:2px;background:linear-gradient(90deg,var(--teal),transparent);border-radius:2px}
+
+/* ===== Hero ===== */
+.hero{padding-top:clamp(28px,6vw,64px);text-align:center}
+.hero h1{font-size:clamp(30px,6vw,54px);font-weight:800;line-height:1.1;letter-spacing:-.5px}
+.hero h1 span{color:var(--teal-d)}
+.hero p.lead{max-width:760px;margin:14px auto 0;font-size:clamp(14.5px,1.9vw,18px);color:var(--ink-2)}
+.badges{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:16px}
+.badges span{font:700 10.5px var(--mono);background:var(--teal);color:#fff;border-radius:9px;padding:3px 9px}
+.badges span.alt{background:var(--card);color:var(--teal-d);border:1px solid var(--teal)}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:22px}
+
+/* ===== Janela com a interface ===== */
+.window{background:var(--card);border-radius:10px;box-shadow:var(--sh);overflow:hidden;border:1px solid var(--line)}
+.window .chrome{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--line)}
+.window .chrome i{width:11px;height:11px;border-radius:50%;background:var(--line)}
+.window .chrome i:nth-child(1){background:var(--red)} .window .chrome i:nth-child(2){background:#e8b84a} .window .chrome i:nth-child(3){background:var(--teal)}
+.window .chrome b{margin-left:8px;font:600 11px var(--mono);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.window a.shot{display:block;cursor:zoom-in;background:var(--bg)}
+.window img{width:100%;height:auto;aspect-ratio:1880/923}
+.caption{text-align:center;font-size:12px;color:var(--ink-2);margin-top:10px}
+
+/* ===== Faixa de dispositivos (cartões iguais aos nós do app) ===== */
+.devices{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:18px 14px;margin-top:26px}
+.node{position:relative;min-width:0;background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:10px 8px 9px;text-align:center;
+  border:2px solid transparent;transition:border-color .15s,transform .15s}
+.node:hover{border-color:var(--teal);transform:translateY(-2px)}
+.node .ico{width:36px;height:36px;margin:0 auto 4px;border-radius:50%;background:var(--teal-l);color:var(--teal-d);display:grid;place-items:center}
+.node .ico svg{width:21px;height:21px}
+.node .nm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node .ip{font:10.5px var(--mono);color:var(--teal-d)}
+.nbtn{position:absolute;top:-10px;width:20px;height:20px;border-radius:50%;background:var(--card);border:1.6px solid var(--teal);
+  color:var(--teal);font:800 13px/1 system-ui;display:grid;place-items:center}
+.nbtn.plus{right:-9px} .nbtn.minus{left:-9px;border-color:var(--red);color:var(--red)}
+
+/* ===== Cartões (mesmo estilo dos painéis do app) ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+.card h3{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff;background:var(--teal);
+  padding:8px 12px;display:flex;align-items:center;gap:8px}
+.card h3 svg{width:16px;height:16px;flex:0 0 auto}
+.card .body{padding:12px 14px;font-size:13.5px;flex:1}
+.card .body p+p{margin-top:6px}
+
+/* ===== Passos ===== */
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px}
+.step{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 14px 14px 56px;position:relative;font-size:13.5px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:14px;width:30px;height:30px;border-radius:50%;
+  background:var(--teal);color:#fff;font:800 14px/30px system-ui;text-align:center}
+.step .h{display:block;font-weight:700;margin-bottom:3px}
+pre{margin-top:14px;background:var(--card);box-shadow:var(--sh);border-radius:var(--r);padding:12px 14px;overflow-x:auto;
+  font:12.5px/1.6 var(--mono);color:var(--ink);border-left:4px solid var(--teal)}
+
+/* ===== Tabelas ===== */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--ink-2);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
+td:first-child{font-weight:700;white-space:nowrap}
+.chip{display:inline-block;border:1px solid var(--line);background:var(--teal-l);color:var(--teal-d);border-radius:5px;padding:1px 7px;font:11.5px var(--mono);white-space:nowrap}
+
+/* ===== Download ===== */
+.dl{text-align:center;background:var(--card);border-radius:12px;box-shadow:var(--sh);padding:clamp(22px,4vw,40px) 18px;
+  border-top:4px solid var(--teal)}
+.dl h2{font-size:clamp(20px,3vw,28px);font-weight:800}
+.dl p{color:var(--ink-2);margin:8px auto 18px;max-width:620px;font-size:14px}
+
+footer{border-top:1px solid var(--line);background:var(--card);padding:18px 0;font-size:12.5px;color:var(--ink-2);margin-top:20px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:space-between;align-items:center}
+
+/* ===== Visualizador da imagem ===== */
+#lb{position:fixed;inset:0;z-index:50;background:rgba(10,15,18,.88);display:none;place-items:center;padding:14px;cursor:zoom-out}
+#lb.on{display:grid}
+#lb img{max-height:100%;width:auto;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+
+/* ===== Responsivo ===== */
+@media (max-width:900px){
+  #menuBtn{display:inline-flex}
+  nav{position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:2px;padding:8px 10px 12px;
+    background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 8px 16px rgba(0,0,0,.12);display:none}
+  nav.open{display:flex}
+  nav a{padding:12px 10px;font-size:14px}
+}
+@media (max-width:520px){
+  header{padding:7px 10px;gap:6px}
+  .logo .tag{display:none}
+  #lang{max-width:118px}
+  .cta .btn{flex:1 1 100%}
+  .devices{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:16px 10px}
+  .node .nm{font-size:11px}
+  td,th{padding:6px 7px}
+}
+@media (max-width:360px){
+  .logo{font-size:14px}
+  #lang{max-width:96px}
+  .devices{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 14px}
+  .node{padding:9px 4px 8px} .node .ip{font-size:9px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- Ícones: os mesmos do NetPlanner v7 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i-router" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="13" width="18" height="7" rx="2"/><circle cx="7.5" cy="16.5" r=".9" fill="currentColor"/><circle cx="11" cy="16.5" r=".9" fill="currentColor"/><path d="M17 13V9M20 13V10"/><circle cx="17" cy="8" r="1.1"/><circle cx="20" cy="9" r="1.1"/></g>
+<g id="i-switch" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="6" y="12" width="2.6" height="2.6"/><rect x="10" y="12" width="2.6" height="2.6"/><rect x="14" y="12" width="2.6" height="2.6"/><rect x="18" y="12" width="1.6" height="2.6"/></g>
+<g id="i-ap" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="17" r="1.4" fill="currentColor"/><path d="M8.5 14a5 5 0 0 1 7 0M5.8 11a9 9 0 0 1 12.4 0M3.2 8a13 13 0 0 1 17.6 0"/></g>
+<g id="i-server" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3.5" width="16" height="7" rx="1.5"/><rect x="4" y="13.5" width="16" height="7" rx="1.5"/><circle cx="7.5" cy="7" r=".9" fill="currentColor"/><circle cx="7.5" cy="17" r=".9" fill="currentColor"/><path d="M12 7h5M12 17h5"/></g>
+<g id="i-pc" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M12 15v3M8 20h8"/></g>
+<g id="i-laptop" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="5.5" y="5" width="13" height="9" rx="1.5"/><path d="M3 18h18l-2.5-4M5.5 14 3 18M18.5 14 21 18"/></g>
+<g id="i-tablet" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="18" r=".9" fill="currentColor"/></g>
+<g id="i-phone" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="11" width="18" height="8" rx="2"/><path d="M6.5 11c0-3.5 11-3.5 11 0"/><circle cx="12" cy="15" r="1.6"/><path d="M17 15h2"/></g>
+<g id="i-cam" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 14a8 8 0 0 1 16 0Z"/><circle cx="12" cy="11.5" r="1.6"/><path d="M12 14v4M8 20h8"/></g>
+<g id="i-print" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="7" rx="2"/><path d="M8 10V4h8v6M8 17h8v4H8z"/></g>
+<g id="i-ups" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M13 7l-3.5 5H12l-1 5 3.5-5H12z"/></g>
+<g id="i-dl" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></g>
+<g id="i-gh"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></g>
+<g id="i-menu" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></g>
+</defs></svg>
+
+<header>
+  <a class="logo" href="#top" aria-label="NetPlanner"><span class="lt">Net<span>Planner</span> v7</span><b class="tag">GPL-3.0+</b></a>
+  <div class="spacer"></div>
+  <nav id="nav">
+    <a href="#interface" data-i18n="n_ui">Interface</a>
+    <a href="#recursos" data-i18n="n_feat">Recursos</a>
+    <a href="#uso" data-i18n="n_use">Como usar</a>
+    <a href="#tecnologias" data-i18n="n_tech">Tecnologias</a>
+    <a href="#download" data-i18n="n_dl">Download</a>
+    <a href="https://github.com/cadunico/netplanner" target="_blank" rel="noopener">GitHub ↗</a>
+  </nav>
+  <select id="lang" aria-label="Idioma / Language">
+    <option value="pt">Português (BR)</option><option value="es">Español</option>
+    <option value="en">English</option><option value="eo">Esperanto</option>
+  </select>
+  <button class="btn mini ghost" id="bTheme" data-i18n-title="t_theme" title="Alternar tema">🌙</button>
+  <button class="btn mini ghost" id="menuBtn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+</header>
+
+<main id="top">
+
+  <!-- ===== Apresentação + interface ===== -->
+  <section class="hero">
+    <div class="wrap">
+      <h1>Net<span>Planner</span></h1>
+      <p class="lead" data-i18n="lead">Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas — em um único arquivo HTML, sem instalação.</p>
+      <div class="badges">
+        <span>v7.0.0</span><span>IPv4 · IPv6</span><span>VLSM</span><span class="alt">HTML5 · CSS3 · ES2020</span><span class="alt">GPL-3.0-or-later</span>
+      </div>
+      <div class="cta">
+        <a class="btn lg" href="https://github.com/cadunico/netplanner/releases/latest" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><use href="#i-dl"/></svg><span data-i18n="b_dl">Baixar a última versão</span></a>
+        <a class="btn lg ghost" href="https://github.com/cadunico/netplanner" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><use href="#i-gh"/></svg><span data-i18n="b_gh">Ver no GitHub</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="interface" style="padding-top:0">
+    <div class="wrap">
+      <div class="window">
+        <div class="chrome"><i></i><i></i><i></i><b>NetPlanner v7 — index.html</b></div>
+        <a class="shot" href="#" id="shot">
+          <img id="shotImg" src="https://raw.githubusercontent.com/cadunico/netplanner/main/docs/img/screenshot.png"
+               onerror="this.onerror=null;this.src='docs/img/screenshot.png'"
+               width="1880" height="923" alt="Interface do NetPlanner v7" data-i18n-alt="alt_shot">
+        </a>
+      </div>
+      <p class="caption" data-i18n="cap">Toque ou clique na imagem para ampliar.</p>
+
+      <div class="devices" id="devices"></div>
+    </div>
+  </section>
+
+  <!-- ===== Recursos ===== -->
+  <section id="recursos">
+    <div class="wrap">
+      <div class="sec-title"><h2 data-i18n="n_feat">Recursos</h2><div class="bar"></div></div>
+      <div class="grid" id="features"></div>
+    </div>
+  </section>
+
+  <!-- ===== Como usar ===== -->
+  <section id="uso">
+    <div class="wrap">
+      <div class="sec-title"><h2 data-i18n="n_use">Como usar</h2><div class="bar"></div></div>
+      <div class="steps" id="steps"></div>
+      <pre>git clone https://github.com/cadunico/netplanner.git
+cd netplanner
+python3 -m http.server 8000   # http://localhost:8000</pre>
+    </div>
+  </section>
+
+  <!-- ===== Tecnologias ===== -->
+  <section id="tecnologias">
+    <div class="wrap">
+      <div class="sec-title"><h2 data-i18n="n_tech">Tecnologias</h2><div class="bar"></div></div>
+      <div class="grid">
+        <div class="card" style="grid-column:1/-1">
+          <h3 data-i18n="c_lang">Linguagens e versões</h3>
+          <div class="body tbl">
+            <table>
+              <thead><tr><th data-i18n="th_lang">Linguagem</th><th data-i18n="th_ver">Versão</th><th data-i18n="th_use">Uso</th></tr></thead>
+              <tbody>
+                <tr><td>HTML</td><td><span class="chip">HTML5</span></td><td data-i18n="u_html">Estrutura da página e formulários</td></tr>
+                <tr><td>CSS</td><td><span class="chip">CSS3 + Color L5</span></td><td data-i18n="u_css">Tema claro/escuro, Grid, Flexbox, color-mix()</td></tr>
+                <tr><td>JavaScript</td><td><span class="chip">ES2020</span></td><td data-i18n="u_js">Toda a lógica: VLSM, BigInt de 128 bits, i18n, exportação</td></tr>
+                <tr><td>SVG</td><td><span class="chip">1.1</span></td><td data-i18n="u_svg">Ícones, ligações e exportação PNG</td></tr>
+                <tr><td>JSON</td><td><span class="chip">RFC 8259</span></td><td data-i18n="u_json">Importação e exportação da topologia</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="c_br">Navegadores suportados</h3>
+          <div class="body tbl">
+            <table>
+              <tr><td>Chrome / Edge / Opera</td><td><span class="chip">111+</span></td></tr>
+              <tr><td>Firefox</td><td><span class="chip">113+</span></td></tr>
+              <tr><td>Safari (macOS / iOS)</td><td><span class="chip">16.2+</span></td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="c_priv">Privacidade</h3>
+          <div class="body"><p data-i18n="priv">Tudo roda localmente no navegador. Nenhum dado é enviado a servidores; só o tema e o idioma ficam salvos no <code>localStorage</code>.</p></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="c_lic">Licença</h3>
+          <div class="body"><p data-i18n="lic">Software livre sob a GNU General Public License v3.0 ou qualquer versão posterior (<code>GPL-3.0-or-later</code>).</p>
+            <p><a href="https://github.com/cadunico/netplanner/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE ↗</a></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Download ===== -->
+  <section id="download">
+    <div class="wrap">
+      <div class="dl">
+        <h2 data-i18n="dl_t">Baixe o NetPlanner</h2>
+        <p data-i18n="dl_p">O botão abre sempre a versão mais recente publicada no GitHub. Extraia o .zip e abra o index.html no navegador.</p>
+        <div class="cta" style="margin-top:0">
+          <a class="btn lg" href="https://github.com/cadunico/netplanner/releases/latest" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><use href="#i-dl"/></svg><span data-i18n="b_dl">Baixar a última versão</span></a>
+          <a class="btn lg ghost" href="https://github.com/cadunico/netplanner" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><use href="#i-gh"/></svg><span data-i18n="b_src">Código-fonte</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 <b>Carlos Eduardo Mattos da Cruz</b> · GPL-3.0-or-later</span>
+    <a href="https://github.com/cadunico/netplanner" target="_blank" rel="noopener">github.com/cadunico/netplanner ↗</a>
+  </div>
+</footer>
+
+<div id="lb" role="dialog" aria-modal="true"><img alt=""></div>
+
+<script>
+"use strict";
+const I18N={
+pt:{n_ui:"Interface",n_feat:"Recursos",n_use:"Como usar",n_tech:"Tecnologias",n_dl:"Download",t_theme:"Alternar tema",
+ title:"NetPlanner — Calculador Visual de Sub-redes",
+ lead:"Calculador visual de sub-redes IPv4/IPv6 com VLSM automático, topologia hierárquica e sumarização de rotas — em um único arquivo HTML, sem instalação.",
+ b_dl:"Baixar a última versão",b_gh:"Ver no GitHub",b_src:"Código-fonte",cap:"Toque ou clique na imagem para ampliar.",alt_shot:"Interface do NetPlanner v7",
+ c_lang:"Linguagens e versões",th_lang:"Linguagem",th_ver:"Versão",th_use:"Uso",
+ u_html:"Estrutura da página e formulários",u_css:"Tema claro/escuro, Grid, Flexbox, color-mix()",u_js:"Toda a lógica: VLSM, BigInt de 128 bits, i18n, exportação",u_svg:"Ícones, ligações e exportação PNG",u_json:"Importação e exportação da topologia",
+ c_br:"Navegadores suportados",c_priv:"Privacidade",c_lic:"Licença",
+ priv:"Tudo roda localmente no navegador. Nenhum dado é enviado a servidores; só o tema e o idioma ficam salvos no <code>localStorage</code>.",
+ lic:"Software livre sob a GNU General Public License v3.0 ou qualquer versão posterior (<code>GPL-3.0-or-later</code>).",
+ dl_t:"Baixe o NetPlanner",dl_p:"O botão abre sempre a versão mais recente publicada no GitHub. Extraia o .zip e abra o index.html no navegador.",
+ dev:["Router","Switch","Access Pt","Server","PC","Laptop","Tablet","IP Phone","IP Cam","MFP/Print","UPS"],
+ feat:[["i-router","Topologia hierárquica","Botões <b>+</b> e <b>−</b> em cada nó, hierarquia infinita. <b>Shift + arrastar</b> sobre outro nó reenxerta o ramo inteiro."],
+  ["i-server","IPv4 e IPv6","Seletor no topo; toda a aritmética de endereços usa <code>BigInt</code> de 128 bits, sem perda de precisão."],
+  ["i-switch","VLSM automático","Cada router recebe um bloco dimensionado pela demanda real dos descendentes; o 1º IP útil de cada LAN é o gateway."],
+  ["i-ap","Enlaces P2P","Prefixo configurável entre routers (<code>/30</code>, <code>/31</code>, <code>/127</code>…), exibido sobre as ligações."],
+  ["i-pc","Máscaras por router","Prefixo da LAN, do bloco e capacidade mínima; aceita <code>26</code>, <code>/26</code> ou <code>255.255.255.192</code>."],
+  ["i-tablet","Sub-redes manuais","Prefixo fixo ou mínimo de hosts, início explícito e reserva, com alerta de sobreposição e desalinhamento."],
+  ["i-print","Tabela e sumários","Tabela VLSM com CIDR, máscara e faixa útil, mais o menor prefixo que agrega as sub-redes de cada router."],
+  ["i-phone","DNS / Hostnames","Domínio configurável e FQDN por dispositivo, com cópia para a área de transferência."],
+  ["i-cam","Exportar e importar","Salve e restaure a topologia em JSON e exporte o diagrama como imagem PNG."],
+  ["i-laptop","Tema e idiomas","Tema claro/escuro e interface em português, espanhol, inglês e esperanto."]],
+ steps:[["Baixe","Clique em <b>Baixar a última versão</b> e extraia o .zip."],["Abra","Abra o <code>index.html</code> em qualquer navegador moderno."],
+  ["Planeje","Defina a rede base, adicione dispositivos com <b>+</b> e ajuste as máscaras."],["Exporte","Salve em <b>JSON</b> ou exporte o diagrama em <b>PNG</b>."]]},
+es:{n_ui:"Interfaz",n_feat:"Funciones",n_use:"Cómo usar",n_tech:"Tecnologías",n_dl:"Descarga",t_theme:"Cambiar tema",
+ title:"NetPlanner — Calculadora Visual de Subredes",
+ lead:"Calculadora visual de subredes IPv4/IPv6 con VLSM automático, topología jerárquica y sumarización de rutas — en un único archivo HTML, sin instalación.",
+ b_dl:"Descargar la última versión",b_gh:"Ver en GitHub",b_src:"Código fuente",cap:"Toque o haga clic en la imagen para ampliarla.",alt_shot:"Interfaz de NetPlanner v7",
+ c_lang:"Lenguajes y versiones",th_lang:"Lenguaje",th_ver:"Versión",th_use:"Uso",
+ u_html:"Estructura de la página y formularios",u_css:"Tema claro/oscuro, Grid, Flexbox, color-mix()",u_js:"Toda la lógica: VLSM, BigInt de 128 bits, i18n, exportación",u_svg:"Iconos, conexiones y exportación PNG",u_json:"Importación y exportación de la topología",
+ c_br:"Navegadores compatibles",c_priv:"Privacidad",c_lic:"Licencia",
+ priv:"Todo se ejecuta localmente en el navegador. No se envía ningún dato a servidores; solo el tema y el idioma se guardan en <code>localStorage</code>.",
+ lic:"Software libre bajo la GNU General Public License v3.0 o cualquier versión posterior (<code>GPL-3.0-or-later</code>).",
+ dl_t:"Descargue NetPlanner",dl_p:"El botón abre siempre la versión más reciente publicada en GitHub. Extraiga el .zip y abra index.html en el navegador.",
+ dev:["Router","Conmutador","Punto acceso","Servidor","PC","Portátil","Tableta","Teléfono IP","Cámara IP","MFP/Impres","SAI"],
+ feat:[["i-router","Topología jerárquica","Botones <b>+</b> y <b>−</b> en cada nodo, jerarquía infinita. <b>Shift + arrastrar</b> sobre otro nodo reinjerta la rama completa."],
+  ["i-server","IPv4 e IPv6","Selector arriba; toda la aritmética de direcciones usa <code>BigInt</code> de 128 bits, sin pérdida de precisión."],
+  ["i-switch","VLSM automático","Cada router recibe un bloque según la demanda real de sus descendientes; la 1.ª IP útil de cada LAN es la puerta de enlace."],
+  ["i-ap","Enlaces P2P","Prefijo configurable entre routers (<code>/30</code>, <code>/31</code>, <code>/127</code>…), mostrado sobre las conexiones."],
+  ["i-pc","Máscaras por router","Prefijo de LAN, de bloque y capacidad mínima; acepta <code>26</code>, <code>/26</code> o <code>255.255.255.192</code>."],
+  ["i-tablet","Subredes manuales","Prefijo fijo o mínimo de hosts, inicio explícito y reserva, con aviso de solapamiento y desalineación."],
+  ["i-print","Tabla y sumarios","Tabla VLSM con CIDR, máscara y rango útil, más el menor prefijo que agrega las subredes de cada router."],
+  ["i-phone","DNS / Nombres de host","Dominio configurable y FQDN por dispositivo, con copia al portapapeles."],
+  ["i-cam","Exportar e importar","Guarde y restaure la topología en JSON y exporte el diagrama como imagen PNG."],
+  ["i-laptop","Tema e idiomas","Tema claro/oscuro e interfaz en portugués, español, inglés y esperanto."]],
+ steps:[["Descargue","Pulse <b>Descargar la última versión</b> y extraiga el .zip."],["Abra","Abra <code>index.html</code> en cualquier navegador moderno."],
+  ["Planifique","Defina la red base, añada dispositivos con <b>+</b> y ajuste las máscaras."],["Exporte","Guarde en <b>JSON</b> o exporte el diagrama en <b>PNG</b>."]]},
+en:{n_ui:"Interface",n_feat:"Features",n_use:"How to use",n_tech:"Technologies",n_dl:"Download",t_theme:"Toggle theme",
+ title:"NetPlanner — Visual Subnet Calculator",
+ lead:"Visual IPv4/IPv6 subnet calculator with automatic VLSM, hierarchical topology and route summarization — in a single HTML file, no install required.",
+ b_dl:"Download latest version",b_gh:"View on GitHub",b_src:"Source code",cap:"Tap or click the image to enlarge.",alt_shot:"NetPlanner v7 interface",
+ c_lang:"Languages & versions",th_lang:"Language",th_ver:"Version",th_use:"Used for",
+ u_html:"Page structure and forms",u_css:"Light/dark theme, Grid, Flexbox, color-mix()",u_js:"All logic: VLSM, 128-bit BigInt, i18n, export",u_svg:"Icons, links and PNG export",u_json:"Topology import and export",
+ c_br:"Supported browsers",c_priv:"Privacy",c_lic:"License",
+ priv:"Everything runs locally in your browser. No data is sent to any server; only theme and language are saved in <code>localStorage</code>.",
+ lic:"Free software under the GNU General Public License v3.0 or any later version (<code>GPL-3.0-or-later</code>).",
+ dl_t:"Download NetPlanner",dl_p:"The button always opens the latest release published on GitHub. Extract the .zip and open index.html in your browser.",
+ dev:["Router","Switch","Access Pt","Server","PC","Laptop","Tablet","IP Phone","IP Cam","MFP/Print","UPS"],
+ feat:[["i-router","Hierarchical topology","<b>+</b> and <b>−</b> buttons on every node, unlimited depth. <b>Shift + drag</b> onto another node re-parents the whole branch."],
+  ["i-server","IPv4 and IPv6","Toggle in the header; all address math uses 128-bit <code>BigInt</code>, with no precision loss."],
+  ["i-switch","Automatic VLSM","Each router gets a block sized to its descendants' real demand; each LAN's first usable IP is the gateway."],
+  ["i-ap","P2P links","Configurable router-to-router prefix (<code>/30</code>, <code>/31</code>, <code>/127</code>…), drawn on the links."],
+  ["i-pc","Per-router masks","LAN prefix, block prefix and minimum capacity; accepts <code>26</code>, <code>/26</code> or <code>255.255.255.192</code>."],
+  ["i-tablet","Manual subnets","Fixed prefix or minimum hosts, explicit start and reservation, with overlap and misalignment warnings."],
+  ["i-print","Table & summaries","VLSM table with CIDR, mask and usable range, plus the shortest prefix aggregating each router's subnets."],
+  ["i-phone","DNS / Hostnames","Configurable domain and per-device FQDNs, with copy to clipboard."],
+  ["i-cam","Export & import","Save and restore the topology as JSON and export the diagram as a PNG image."],
+  ["i-laptop","Theme & languages","Light/dark theme and UI in Portuguese, Spanish, English and Esperanto."]],
+ steps:[["Download","Click <b>Download latest version</b> and extract the .zip."],["Open","Open <code>index.html</code> in any modern browser."],
+  ["Plan","Set the base network, add devices with <b>+</b> and tune the masks."],["Export","Save as <b>JSON</b> or export the diagram as <b>PNG</b>."]]},
+eo:{n_ui:"Interfaco",n_feat:"Funkcioj",n_use:"Kiel uzi",n_tech:"Teknologioj",n_dl:"Elŝuti",t_theme:"Ŝanĝi etoson",
+ title:"NetPlanner — Vida Kalkulilo de Subretoj",
+ lead:"Vida kalkulilo de IPv4/IPv6-subretoj kun aŭtomata VLSM, hierarkia topologio kaj itinera resumado — en unu sola HTML-dosiero, sen instalado.",
+ b_dl:"Elŝuti la lastan version",b_gh:"Vidi en GitHub",b_src:"Fontkodo",cap:"Tuŝu aŭ klaku la bildon por pligrandigi ĝin.",alt_shot:"Interfaco de NetPlanner v7",
+ c_lang:"Lingvoj kaj versioj",th_lang:"Lingvo",th_ver:"Versio",th_use:"Uzo",
+ u_html:"Strukturo de la paĝo kaj formularoj",u_css:"Hela/malhela etoso, Grid, Flexbox, color-mix()",u_js:"Ĉiu logiko: VLSM, 128-bita BigInt, i18n, eksportado",u_svg:"Piktogramoj, ligoj kaj PNG-eksportado",u_json:"Importado kaj eksportado de la topologio",
+ c_br:"Subtenataj retumiloj",c_priv:"Privateco",c_lic:"Permesilo",
+ priv:"Ĉio funkcias loke en via retumilo. Neniuj datumoj estas senditaj al serviloj; nur la etoso kaj la lingvo estas konservataj en <code>localStorage</code>.",
+ lic:"Libera programaro laŭ la GNU General Public License v3.0 aŭ iu ajn posta versio (<code>GPL-3.0-or-later</code>).",
+ dl_t:"Elŝutu NetPlanner",dl_p:"La butono ĉiam malfermas la plej freŝan eldonon en GitHub. Malpaku la .zip-dosieron kaj malfermu index.html en la retumilo.",
+ dev:["Enkursigilo","Ŝaltilo","Alirpunkto","Servilo","Komputilo","Tekkomputilo","Tabulkomputilo","IP-telefono","IP-kamerao","Presilo","UPS"],
+ feat:[["i-router","Hierarkia topologio","Butonoj <b>+</b> kaj <b>−</b> ĉe ĉiu nodo, senlima profundo. <b>Shift + treni</b> sur alian nodon transplantas la tutan branĉon."],
+  ["i-server","IPv4 kaj IPv6","Elektilo supre; ĉiu adresa kalkulo uzas 128-bitan <code>BigInt</code>, sen perdo de precizeco."],
+  ["i-switch","Aŭtomata VLSM","Ĉiu enkursigilo ricevas blokon laŭ la reala bezono de siaj posteuloj; la unua uzebla IP de ĉiu LAN estas la kluzo."],
+  ["i-ap","P2P-ligoj","Agordebla prefikso inter enkursigiloj (<code>/30</code>, <code>/31</code>, <code>/127</code>…), montrata sur la ligoj."],
+  ["i-pc","Maskoj por enkursigilo","Prefikso de LAN, de bloko kaj minimuma kapacito; akceptas <code>26</code>, <code>/26</code> aŭ <code>255.255.255.192</code>."],
+  ["i-tablet","Manaj subretoj","Fiksa prefikso aŭ minimuma nombro de gastigantoj, eksplicita komenco kaj rezervo, kun avertoj pri interkovro."],
+  ["i-print","Tabelo kaj resumoj","VLSM-tabelo kun CIDR, masko kaj uzebla intervalo, plus la plej mallonga prefikso kiu kunigas la subretojn de ĉiu enkursigilo."],
+  ["i-phone","DNS / Gastigantnomoj","Agordebla domajno kaj FQDN por ĉiu aparato, kun kopiado al la tondujo."],
+  ["i-cam","Eksporti kaj importi","Konservu kaj restarigu la topologion en JSON kaj eksportu la diagramon kiel PNG-bildon."],
+  ["i-laptop","Etoso kaj lingvoj","Hela/malhela etoso kaj interfaco en la portugala, hispana, angla kaj Esperanto."]],
+ steps:[["Elŝutu","Klaku <b>Elŝuti la lastan version</b> kaj malpaku la .zip-dosieron."],["Malfermu","Malfermu <code>index.html</code> en iu ajn moderna retumilo."],
+  ["Planu","Difinu la bazan reton, aldonu aparatojn per <b>+</b> kaj agordu la maskojn."],["Eksportu","Konservu en <b>JSON</b> aŭ eksportu la diagramon kiel <b>PNG</b>."]]}
+};
+const ICONS=["i-router","i-switch","i-ap","i-server","i-pc","i-laptop","i-tablet","i-phone","i-cam","i-print","i-ups"];
+const IPS=["192.168.0.1","192.168.0.2","192.168.0.6","192.168.0.14","192.168.0.3","192.168.0.7","192.168.0.8","192.168.0.9","192.168.0.12","192.168.0.13","192.168.0.15"];
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+function pickLang(){
+  const s=store.get("np-lang"); if(s&&I18N[s])return s;
+  const n=(navigator.language||"pt").slice(0,2).toLowerCase(); return I18N[n]?n:"pt";
+}
+function apply(lang){
+  const T=I18N[lang];
+  document.documentElement.lang=lang==="pt"?"pt-BR":lang;
+  document.title=T.title;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{const v=T[el.dataset.i18n];if(v!=null)el.innerHTML=v;});
+  document.querySelectorAll("[data-i18n-title]").forEach(el=>{el.title=T[el.dataset.i18nTitle];});
+  document.querySelectorAll("[data-i18n-alt]").forEach(el=>{el.alt=T[el.dataset.i18nAlt];});
+  $("devices").innerHTML=T.dev.map((n,i)=>`<div class="node"><span class="nbtn minus">−</span><span class="nbtn plus">+</span>
+    <div class="ico"><svg viewBox="0 0 24 24"><use href="#${ICONS[i]}"/></svg></div><div class="nm" title="${n}">${n}-1</div><div class="ip">${IPS[i]}</div></div>`).join("");
+  $("features").innerHTML=T.feat.map(([ic,h,p])=>`<div class="card"><h3><svg viewBox="0 0 24 24"><use href="#${ic}"/></svg>${h}</h3><div class="body"><p>${p}</p></div></div>`).join("");
+  $("steps").innerHTML=T.steps.map(([h,p])=>`<div class="step"><span class="h">${h}</span>${p}</div>`).join("");
+  $("lang").value=lang;
+}
+let LANG=pickLang(); apply(LANG);
+$("lang").addEventListener("change",e=>{LANG=e.target.value;store.set("np-lang",LANG);apply(LANG);});
+
+/* tema (mesma chave do app) */
+function setTheme(th){document.documentElement.dataset.theme=th;$("bTheme").textContent=th==="dark"?"☀️":"🌙";}
+setTheme(store.get("np-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));
+$("bTheme").addEventListener("click",()=>{const th=document.documentElement.dataset.theme==="dark"?"light":"dark";setTheme(th);store.set("np-theme",th);});
+
+/* menu móvel */
+const nav=$("nav"),mb=$("menuBtn");
+mb.addEventListener("click",()=>{const o=nav.classList.toggle("open");mb.setAttribute("aria-expanded",o);});
+nav.addEventListener("click",e=>{if(e.target.closest("a")){nav.classList.remove("open");mb.setAttribute("aria-expanded","false");}});
+document.addEventListener("click",e=>{if(!e.target.closest("header")){nav.classList.remove("open");mb.setAttribute("aria-expanded","false");}});
+
+/* item ativo no menu */
+const secs=["interface","recursos","uso","tecnologias","download"].map(id=>$(id));
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){
+  nav.querySelectorAll("a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+en.target.id));}}),{rootMargin:"-45% 0px -50% 0px"});
+secs.forEach(s=>io.observe(s));
+
+/* ampliar a imagem */
+const lb=$("lb");
+$("shot").addEventListener("click",e=>{e.preventDefault();lb.querySelector("img").src=$("shotImg").currentSrc||$("shotImg").src;lb.classList.add("on");});
+lb.addEventListener("click",()=>lb.classList.remove("on"));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")lb.classList.remove("on");});
+</script>
+</body>
+</html>

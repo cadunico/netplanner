@@ -12,6 +12,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-F7DF1E?logo=javascript&logoColor=black)
 ![SVG](https://img.shields.io/badge/SVG-1.1-FFB13B?logo=svg&logoColor=black)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-success)
+![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?logo=docker&logoColor=white)
 ![i18n](https://img.shields.io/badge/i18n-pt--BR%20%7C%20es%20%7C%20en%20%7C%20eo-informational)
 
 ![NetPlanner screenshot](docs/img/screenshot.png)
@@ -82,6 +83,18 @@ Não há servidor, build, instalação nem dependências externas: basta abrir o
 
 Tudo roda localmente no navegador. Nenhum dado é enviado a servidores; só o tema e o idioma ficam no `localStorage`.
 
+### Docker (opcional)
+
+O NetPlanner **não precisa de Docker**: basta abrir o `index.html`. A imagem serve para quem quer hospedá-lo num servidor próprio ou numa rede interna.
+
+```bash
+docker run -d -p 8080:80 --name netplanner ghcr.io/cadunico/netplanner:latest
+# ou, para construir a imagem a partir do código:
+docker compose up -d --build
+```
+
+Depois acesse <http://localhost:8080> (app) e <http://localhost:8080/site.html> (página do projeto). A imagem é publicada automaticamente no GitHub Container Registry (`ghcr.io`) a cada nova release.
+
 ### Licença
 
 Copyright © 2026 **Carlos Eduardo Mattos da Cruz**.
@@ -132,6 +145,18 @@ No hay servidor, compilación, instalación ni dependencias externas: basta con 
 ### Privacidad
 
 Todo se ejecuta localmente en el navegador; no se envía ningún dato a servidores.
+
+### Docker (opcional)
+
+NetPlanner **no necesita Docker**: basta con abrir `index.html`. La imagen es para quien quiera alojarlo en un servidor propio o en una red interna.
+
+```bash
+docker run -d -p 8080:80 --name netplanner ghcr.io/cadunico/netplanner:latest
+# o, para construir la imagen desde el código:
+docker compose up -d --build
+```
+
+Luego abra <http://localhost:8080> (aplicación) y <http://localhost:8080/site.html> (página del proyecto). La imagen se publica automáticamente en GitHub Container Registry (`ghcr.io`) con cada nueva versión.
 
 ### Licencia
 
@@ -184,6 +209,18 @@ The app opens with a **demo topology**; press **NEW** to start from scratch. Sav
 
 Everything runs locally in your browser. No data leaves your machine.
 
+### Docker (optional)
+
+NetPlanner **does not need Docker**: just open `index.html`. The image is for anyone who wants to self-host it on their own server or internal network.
+
+```bash
+docker run -d -p 8080:80 --name netplanner ghcr.io/cadunico/netplanner:latest
+# or, to build the image from source:
+docker compose up -d --build
+```
+
+Then open <http://localhost:8080> (app) and <http://localhost:8080/site.html> (project page). The image is published automatically to GitHub Container Registry (`ghcr.io`) on every new release.
+
 ### License
 
 Copyright © 2026 **Carlos Eduardo Mattos da Cruz**.
@@ -230,6 +267,18 @@ La aplikaĵo malfermiĝas kun **demonstra ekzemplo**; premu **NOVA** por komenci
 ### Privateco
 
 Ĉio funkcias loke en via retumilo; neniuj datumoj estas senditaj.
+
+### Docker (nedeviga)
+
+NetPlanner **ne bezonas Docker**: simple malfermu `index.html`. La bildo estas por tiuj, kiuj volas gastigi ĝin en propra servilo aŭ en interna reto.
+
+```bash
+docker run -d -p 8080:80 --name netplanner ghcr.io/cadunico/netplanner:latest
+# aŭ, por konstrui la bildon el la fontkodo:
+docker compose up -d --build
+```
+
+Poste malfermu <http://localhost:8080> (aplikaĵo) kaj <http://localhost:8080/site.html> (projekta paĝo). La bildo estas aŭtomate publikigata en GitHub Container Registry (`ghcr.io`) ĉe ĉiu nova eldono.
 
 ### Permesilo
 
