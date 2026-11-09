@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<!--
+  NetPlanner — Calculador Visual de Sub-redes (IPv4/IPv6, VLSM)
+  Copyright (C) 2026 Carlos Eduardo Mattos da Cruz
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetPlanner v7</title>
+<style>
+:root{
+  --teal:#2fbf9f; --teal-d:#22a587; --red:#e05c5c; --blue:#4a90d9;
+  --teal-l:color-mix(in srgb,var(--teal) 12%,white);
+  --ink:#3d4549; --ink-2:#7b858a; --line:#dfe5e8;
+  --bg:#eef2f3; --bg2:#f7fafa; --card:#fff; --dot:#d3dadd;
+  --sh:0 2px 6px rgba(30,45,50,.16), 0 8px 22px rgba(30,45,50,.10); --r:8px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
+}
+[data-theme="dark"]{
+  --teal-l:color-mix(in srgb,var(--teal) 16%,#1e262a);
+  --ink:#e6edf0; --ink-2:#93a1a8; --line:#2c383e;
+  --bg:#141a1d; --bg2:#1a2125; --card:#1e262a; --dot:#2a343a;
+  --sh:0 2px 6px rgba(0,0,0,.5), 0 10px 26px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:grid;grid-template-rows:auto 1fr;background:var(--bg);color:var(--ink);overflow:hidden}
+header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px;background:var(--card);
+  border-bottom:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:20}
+header h1{font-size:15px;font-weight:700} header h1 span{color:var(--teal-d)}
+select,.btn,input[type=text],input[type=number]{font:600 12px/1 system-ui}
+select{border:1px solid var(--line);border-radius:6px;padding:8px 5px;background:var(--card);color:var(--ink)}
+.basebox{display:flex;align-items:center;gap:7px;background:var(--teal-l);
+  border:1px solid color-mix(in srgb,var(--teal) 35%,var(--card));border-radius:var(--r);padding:5px 9px}
+.basebox label{font-size:10px;font-weight:800;color:var(--teal-d);text-transform:uppercase;letter-spacing:.6px}
+.basebox input[type=text]{width:132px;border:1px solid var(--line);border-radius:5px;padding:5px 6px;
+  font:11.5px ui-monospace,Consolas,monospace;color:var(--ink);background:var(--card)}
+.basebox input.bad{border-color:var(--red);outline:2px solid color-mix(in srgb,var(--red) 35%,transparent)}
+.basebox input[type=range]{width:90px;accent-color:var(--teal-d)}
+.basebox output{font:700 12px ui-monospace,monospace;color:var(--teal-d);min-width:34px}
+.spacer{flex:1}
+.btn{border:0;border-radius:6px;background:var(--teal);color:#fff;padding:9px 12px;cursor:pointer;transition:.15s;
+  box-shadow:0 2px 5px color-mix(in srgb,var(--teal-d) 40%,transparent)}
+.btn:hover{background:var(--teal-d);transform:translateY(-1px)}
+.btn.ghost{background:var(--card);color:var(--teal-d);border:1.5px solid var(--teal)}
+.btn.ghost:hover{background:var(--teal-l)}
+.btn.mini{padding:7px 9px;font-size:11px}
+.btn.new{background:var(--red);box-shadow:0 2px 5px color-mix(in srgb,var(--red) 45%,transparent);font-weight:800;letter-spacing:.5px}
+.btn.new:hover{filter:brightness(.9)}
+main{display:grid;grid-template-columns:1fr 350px;min-height:0}
+#wrap{position:relative;overflow:hidden;cursor:grab;
+  background-image:radial-gradient(var(--dot) 1px,transparent 1.4px);background-size:24px 24px}
+#wrap.panning{cursor:grabbing}
+#world{position:absolute;inset:0;transform-origin:0 0}
+#edges{position:absolute;inset:0;overflow:visible;pointer-events:none}
+#edges path{fill:none;stroke:var(--blue);stroke-width:2;opacity:.85}
+#edges text{font:600 10px ui-monospace,Consolas,monospace;fill:var(--blue);paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.node{position:absolute;transform:translate(-50%,-50%);min-width:98px;max-width:156px;background:var(--card);
+  border-radius:var(--r);box-shadow:var(--sh);padding:9px 10px 8px;text-align:center;cursor:grab;
+  touch-action:none;user-select:none;border:2px solid transparent;transition:border-color .15s}
+.node:active{cursor:grabbing}
+.node.sel{border-color:var(--teal)} .node.err{border-color:var(--red)}
+.node .ico{width:36px;height:36px;margin:0 auto 4px;border-radius:50%;background:var(--teal-l);color:var(--teal-d);display:grid;place-items:center}
+.node .ico svg{width:21px;height:21px}
+.node .nm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node .nm input{width:100%;border:1px solid var(--teal);border-radius:4px;font:700 12px system-ui;
+  text-align:center;background:var(--card);color:var(--ink);padding:1px 2px}
+.node .ip{font:10.5px ui-monospace,Consolas,monospace;color:var(--teal-d);min-height:14px;word-break:break-all}
+.node .bdg{display:inline-block;margin-top:3px;font:700 9.5px ui-monospace,monospace;background:var(--teal);color:#fff;border-radius:9px;padding:2px 7px}
+.node.err .bdg{background:var(--red)}
+.nbtn{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--card);border:1.6px solid var(--teal);
+  color:var(--teal);font:800 14px/1 system-ui;cursor:pointer;display:grid;place-items:center;transition:.15s;z-index:2}
+.nbtn:hover{background:var(--teal);color:#fff;transform:scale(1.12)}
+.nbtn.plus{top:-11px;right:-11px}
+.nbtn.minus{top:-11px;left:-11px;border-color:var(--red);color:var(--red)}
+.nbtn.minus:hover{background:var(--red);color:#fff}
+.node.root .minus{display:none}
+aside{background:var(--bg2);border-left:1px solid var(--line);overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+aside>.card{flex:0 0 auto}                 /* nunca encolher / nunca clipar */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);
+  display:flex;flex-direction:column;min-height:46px;max-height:88vh;
+  resize:vertical;overflow:hidden}         /* redimensionável pelo canto */
+.card h2{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff;background:var(--teal);
+  padding:8px 12px;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.card h2 button{margin-left:auto;border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:5px;cursor:pointer;font-size:10.5px;padding:3px 7px}
+.card h2 button:hover{background:rgba(255,255,255,.35)}
+.card .body{padding:10px 12px;font-size:12px;flex:1 1 auto;overflow-y:auto;min-height:0;scrollbar-width:thin}
+.card .body::-webkit-scrollbar{width:8px}
+.card .body::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+.card .warn{flex:0 0 auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center}
+.kv b{color:var(--ink-2);font-weight:600}
+.kv code{font:11px ui-monospace,Consolas,monospace;color:var(--ink);word-break:break-all}
+.kv input,.kv select{width:96px;border:1px solid var(--line);border-radius:5px;padding:3px 5px;font:11px ui-monospace,monospace;background:var(--card);color:var(--ink)}
+.kv input.bad{border-color:var(--red)}
+.kv button{border:0;background:var(--teal-l);color:var(--teal-d);border-radius:5px;cursor:pointer;font-size:11px;padding:3px 6px}
+.kv button:disabled,.kv input:disabled,.kv select:disabled{opacity:.45;cursor:not-allowed}
+.bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 2px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-d));border-radius:5px;transition:width .3s}
+table{width:100%;border-collapse:collapse;font-size:10.5px}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--ink-2);font-weight:700;text-transform:uppercase;font-size:9.5px}
+td code{font:10px ui-monospace,monospace;word-break:break-all}
+tr.lvl1 td:first-child{padding-left:14px}tr.lvl2 td:first-child{padding-left:22px}tr.lvl3 td:first-child{padding-left:30px}
+tr.sub{cursor:pointer}tr.sub:hover{background:var(--teal-l)}
+.mchip{border:1px solid var(--line);background:var(--teal-l);color:var(--teal-d);border-radius:5px;
+  padding:1px 6px;font:10px ui-monospace,Consolas,monospace;cursor:pointer}
+.mchip:hover{border-color:var(--teal)}
+.mchip.ovl{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.mchip.ghost{background:transparent;color:var(--ink-2)}
+td input{width:80px;border:1px solid var(--teal);border-radius:4px;font:10px ui-monospace,monospace;background:var(--card);color:var(--ink);padding:1px 4px}
+.warn{background:color-mix(in srgb,var(--red) 12%,var(--card));color:var(--red);
+  border:1px solid color-mix(in srgb,var(--red) 45%,var(--card));border-radius:6px;padding:7px 9px;font-size:11px;margin:8px 12px 12px;display:none}
+.warn.on{display:block}
+.ok{color:var(--teal-d);font-weight:700}
+form.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+form.mgrid label{font-size:9.5px;font-weight:800;color:var(--ink-2);text-transform:uppercase;display:grid;gap:3px}
+form.mgrid input,form.mgrid select{border:1px solid var(--line);border-radius:5px;padding:5px;font:11px ui-monospace,monospace;background:var(--card);color:var(--ink)}
+form.mgrid input.bad{border-color:var(--red)}
+form.mgrid .full{grid-column:1/-1}
+form.mgrid .row{grid-column:1/-1;display:flex;gap:6px;align-items:center}
+form.mgrid .row label{display:flex;gap:5px;align-items:center;text-transform:none;font-weight:600;font-size:11px}
+.mrow{display:flex;gap:6px;align-items:center;padding:4px 2px;border-bottom:1px solid var(--line);font-size:11px}
+.mrow code{flex:1;font:10.5px ui-monospace,monospace;word-break:break-all}
+.mrow button{border:0;background:var(--teal-l);color:var(--teal-d);border-radius:5px;cursor:pointer;font-size:11px;padding:2px 6px}
+.mrow button.del{background:color-mix(in srgb,var(--red) 14%,var(--card));color:var(--red)}
+#plus{position:fixed;z-index:50;background:var(--card);border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.4);padding:10px;display:none;grid-template-columns:repeat(4,76px);gap:6px}
+#plus.on{display:grid}
+#plus button{border:0;background:var(--teal-l);border-radius:8px;padding:8px 2px 6px;cursor:pointer;display:grid;justify-items:center;gap:3px;transition:.12s;color:var(--ink)}
+#plus button:hover{background:var(--teal);color:#fff}
+#plus .pl-ico{color:var(--teal-d)} #plus button:hover .pl-ico{color:#fff}
+#plus svg{width:20px;height:20px} #plus span{font-size:9px;font-weight:700}
+#modal{position:fixed;inset:0;background:rgba(10,15,18,.55);backdrop-filter:blur(3px);display:none;place-items:center;z-index:90}
+#modal.on{display:grid}
+#modal .box{width:min(640px,92vw);max-height:86vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#modal h2{background:var(--teal);color:#fff;padding:12px 16px;font-size:14px;position:sticky;top:0}
+#modal .bd{padding:16px 20px;font-size:13px;line-height:1.65}
+#modal li{margin:5px 0 5px 18px}
+#modal .ft{padding:12px 20px;font-size:11.5px;color:var(--ink-2);border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs id="sprite">
+<g id="i-router" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="13" width="18" height="7" rx="2"/><circle cx="7.5" cy="16.5" r=".9" fill="currentColor"/><circle cx="11" cy="16.5" r=".9" fill="currentColor"/><path d="M17 13V9M20 13V10"/><circle cx="17" cy="8" r="1.1"/><circle cx="20" cy="9" r="1.1"/></g>
+<g id="i-switch" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="6" y="12" width="2.6" height="2.6"/><rect x="10" y="12" width="2.6" height="2.6"/><rect x="14" y="12" width="2.6" height="2.6"/><rect x="18" y="12" width="1.6" height="2.6"/></g>
+<g id="i-ap" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="17" r="1.4" fill="currentColor"/><path d="M8.5 14a5 5 0 0 1 7 0M5.8 11a9 9 0 0 1 12.4 0M3.2 8a13 13 0 0 1 17.6 0"/></g>
+<g id="i-server" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3.5" width="16" height="7" rx="1.5"/><rect x="4" y="13.5" width="16" height="7" rx="1.5"/><circle cx="7.5" cy="7" r=".9" fill="currentColor"/><circle cx="7.5" cy="17" r=".9" fill="currentColor"/><path d="M12 7h5M12 17h5"/></g>
+<g id="i-pc" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M12 15v3M8 20h8"/></g>
+<g id="i-laptop" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="5.5" y="5" width="13" height="9" rx="1.5"/><path d="M3 18h18l-2.5-4M5.5 14 3 18M18.5 14 21 18"/></g>
+<g id="i-tablet" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="18" r=".9" fill="currentColor"/></g>
+<g id="i-phone" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="11" width="18" height="8" rx="2"/><path d="M6.5 11c0-3.5 11-3.5 11 0"/><circle cx="12" cy="15" r="1.6"/><path d="M17 15h2"/></g>
+<g id="i-cam" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 14a8 8 0 0 1 16 0Z"/><circle cx="12" cy="11.5" r="1.6"/><path d="M12 14v4M8 20h8"/></g>
+<g id="i-print" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="7" rx="2"/><path d="M8 10V4h8v6M8 17h8v4H8z"/></g>
+<g id="i-ups" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M13 7l-3.5 5H12l-1 5 3.5-5H12z"/></g>
+</defs></svg>
+
+<header>
+  <h1>Net<span>Planner</span> v7</h1>
+  <button class="btn new mini" id="bNew" data-i18n="new">NOVO</button>
+  <select id="lang"><option value="pt">Português (BR)</option><option value="es">Español</option>
+    <option value="en">English</option><option value="eo">Esperanto</option></select>
+  <select id="fam"><option value="4">IPv4</option><option value="6">IPv6</option></select>
+  <div class="basebox">
+    <label data-i18n="base">Rede base</label>
+    <input type="text" id="ipIn" value="192.168.0.0" spellcheck="false">
+    <input type="text" id="mkBase" value="255.255.255.0" spellcheck="false" data-i18n-title="b_mask">
+    <input type="range" id="cidrIn" min="8" max="30" value="24">
+    <output id="cidrOut">/24</output>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn mini ghost" id="bJson" data-i18n-title="t_json_dl">⬇ JSON</button>
+  <button class="btn mini ghost" id="bImp" data-i18n-title="t_json_up">⬆ JSON</button>
+  <button class="btn mini ghost" id="bPng" data-i18n-title="t_png">⬇ PNG</button>
+  <input type="file" id="fIn" accept=".json,application/json" hidden>
+  <button class="btn ghost" id="bOrg" data-i18n="org">⤧ Organizar</button>
+  <button class="btn ghost" id="bFit" data-i18n="fit">⛶ Enquadrar</button>
+  <button class="btn mini ghost" id="bTheme" data-i18n-title="t_theme">🌙</button>
+  <button class="btn" id="bHelp" data-i18n="help">Ajuda</button>
+</header>
+
+<main>
+  <div id="wrap"><div id="world"><svg id="edges"></svg><div id="nodesLayer"></div></div></div>
+  <aside>
+    <div class="card"><h2 data-i18n="c_sum">Resumo da rede</h2><div class="body" id="sumBody"></div><div class="warn" id="warnBox"></div></div>
+
+    <div class="card"><h2 data-i18n="c_mask">Configuração de máscaras</h2>
+      <div class="body"><div class="kv">
+        <b data-i18n="r_link">Prefixo de enlace P2P</b><code><input id="lkIn" type="number" value="30" style="width:64px"></code>
+        <b data-i18n="mk_router">Router a configurar</b><code><select id="mkRouter" style="width:120px"></select></code>
+        <b data-i18n="d_lan">Prefixo LAN</b><code><input id="mkLan" spellcheck="false"> <button id="mkLanR" title="↺">↺</button></code>
+        <b data-i18n="d_blk">Prefixo Bloco</b><code><input id="mkBlk" spellcheck="false"> <button id="mkBlkR" title="↺">↺</button></code>
+        <b data-i18n="d_min">Capacidade mín. de hosts</b><code><input id="mkMin" type="number" min="0" style="width:64px"> <button id="mkMinR" title="↺">↺</button></code>
+      </div><small id="mkAuto" style="color:var(--ink-2)"></small></div></div>
+
+    <div class="card"><h2 data-i18n="c_det">Detalhes</h2><div class="body" id="detBody"></div></div>
+    <div class="card"><h2 data-i18n="c_man">Sub-redes manuais</h2><div class="body">
+      <form class="mgrid" id="mnForm" autocomplete="off">
+        <label><span data-i18n="d_name">Nome</span><input id="mnName" class="full" required></label>
+        <label><span data-i18n="m_owner">Dono</span><select id="mnOwner"></select></label>
+        <label><span data-i18n="m_mode">Regra</span><select id="mnMode">
+          <option value="prefix" data-i18n="m_prefix">Prefixo fixo</option>
+          <option value="hosts" data-i18n="m_hosts">Mín. de hosts</option></select></label>
+        <label><span data-i18n="m_val">Valor</span><input id="mnVal" type="number" min="1" value="26"></label>
+        <label><span data-i18n="m_start">Início (opcional)</span><input id="mnStart" spellcheck="false"></label>
+        <div class="row"><label><input type="checkbox" id="mnRes" style="width:auto"><span data-i18n="m_res">reservada</span></label></div>
+        <div class="row"><button type="button" class="btn mini" id="mnOk" data-i18n="m_add">Adicionar</button>
+          <button type="button" class="btn mini ghost" id="mnCancel" data-i18n="m_cancel" style="display:none">Cancelar</button></div>
+      </form>
+      <div id="mnList"></div></div></div>
+    <div class="card"><h2 data-i18n="c_tab">Tabela de sub-redes (VLSM)</h2>
+      <div class="body" style="padding:4px 6px 8px"><table id="subTab">
+        <thead><tr><th data-i18n="th_sub">Sub-rede</th><th data-i18n="th_cidr">CIDR / Máscara</th><th data-i18n="th_range">Faixa utilizável</th></tr></thead>
+        <tbody></tbody></table></div></div>
+    <div class="card"><h2 data-i18n="c_agg">Sumários de rota (agregação)</h2><div class="body" id="aggBody"></div></div>
+    <div class="card"><h2><span data-i18n="c_dns">DNS / Hostnames</span><button id="bHosts">⧉ hosts</button></h2>
+      <div class="body" id="dnsBody"></div></div>
+  </aside>
+</main>
+
+<div id="plus"></div>
+<div id="modal"><div class="box">
+  <h2 data-i18n="m_title">Como usar</h2>
+  <div class="bd" id="mBody"></div>
+  <div class="ft" id="mFoot"></div>
+  <div style="padding:0 16px 14px;text-align:right"><button class="btn" id="mOk" data-i18n="m_ok">Entendi</button></div>
+</div></div>
+
+<script>
+"use strict";
+const B=BigInt;
+/* ================= i18n: pt-BR → es → en → eo ================= */
+const I18N={
+pt:{app:"NetPlanner v7 — Calculador Visual de Sub-redes",new:"NOVO",base:"Rede base",org:"⤧ Organizar",fit:"⛶ Enquadrar",help:"Ajuda",
+ b_mask:"Máscara da rede base (edite para mudar o CIDR)",
+ t_json_dl:"Exportar topologia (JSON)",t_json_up:"Importar JSON",t_png:"Exportar imagem PNG",t_theme:"Alternar tema",
+ c_sum:"Resumo da rede",c_mask:"Configuração de máscaras",r_link:"Prefixo de enlace P2P",mk_router:"Router a configurar",
+ c_det:"Detalhes",c_tab:"Tabela de sub-redes (VLSM)",c_agg:"Sumários de rota (agregação)",c_dns:"DNS / Hostnames",c_man:"Sub-redes manuais",
+ th_sub:"Sub-rede",th_cidr:"CIDR / Máscara",th_range:"Faixa utilizável",
+ s_base:"Base",s_mask:"másc.",s_bcast:"Broadcast/último",s_dev:"Dispositivos",s_ip:"c/ IP",s_depth:"profund.",s_subs:"Sub-redes",s_lan:"LAN",s_links:"enlaces",s_dom:"Domínio DNS",s_util:"Utilização:",s_of:"de",s_addr:"endereços",
+ d_type:"Tipo",d_name:"Nome",d_host:"Hostname",d_ip:"IP",d_wan:"IP WAN/uplink",d_mask:"Máscara",d_gw:"Gateway",d_net:"Rede",d_bcast:"Broadcast",d_range:"Faixa útil",d_hosts:"Hosts úteis",d_block:"Bloco alocado",d_sum:"Sumário anunciado",d_routes:"rotas → 1",d_lan:"Prefixo LAN",d_blk:"Prefixo Bloco",d_min:"Capacidade mín. de hosts",d_auto:"Voltar ao automático",d_autoph:"auto",d_click:"Clique em um dispositivo… (duplo clique renomeia)",
+ mk_sel:"Selecione um router acima (ou no canvas) para configurar as máscaras dele.",mk_edit:"Clique para editar a máscara",mk_auto:"Automático:",
+ m_owner:"Dono",m_mode:"Regra",m_prefix:"Prefixo fixo",m_hosts:"Mín. de hosts",m_val:"Valor",m_start:"Início (opcional)",m_res:"reservada",m_add:"Adicionar",m_save:"Salvar",m_cancel:"Cancelar",m_base:"Base (fora de routers)",m_empty:"Nenhuma sub-rede manual…",m_edit:"Editar",m_del:"Remover",
+ k_block:"Bloco",th_hosts:"hosts",a_agg:"Agrega",a_subs:"sub-redes",a_exact:"cobertura exata",a_waste:"sobra",a_empty:"Adicione routers filhos para ver agregações…",
+ n_dom:"Domínio",n_host:"Host",copied:"✓ copiado",
+ w_lan:"Máscara custom da LAN de {0} (/{1}) não comporta {2} hosts.",w_block:"Bloco custom de {0} (/{1}) menor que a demanda interna.",
+ w_base:"Demanda de {0} endereços excede a base /{1} ({2}). CIDR mínimo: /{3}.",w_fit:"Bloco insuficiente para alocação interna de {0}.",
+ w_over:"Sobreposição: {0} colide com {1}.",w_align:"Endereço inicial não alinhado ao tamanho da sub-rede.",w_manfit:"Sub-rede manual {0} não cabe em {1}.",
+ c_del:"Remover {0} e mais {1} dispositivo(s)?",c_new:"Criar projeto novo? O atual será descartado.",
+ t_router:"Router",t_switch:"Switch",t_ap:"Access Pt",t_server:"Server",t_pc:"PC",t_laptop:"Laptop",t_tablet:"Tablet",t_phone:"IP Phone",t_camera:"IP Cam",t_printer:"MFP/Print",t_ups:"UPS",
+ m_title:"Como usar",m_ok:"Entendi",
+ h1:"<b>Adicionar / Remover:</b> botões <b>+</b> e <b>−</b> (hierarquia infinita). <b>Shift+arrastar</b> soltando sobre outro nó reenxerta o ramo.",
+ h2:"<b>IPv4 ↔ IPv6:</b> seletor no topo (aritmética BigInt de 128 bits).",
+ h3:"<b>Base:</b> edite IP, <b>máscara</b> ou slider — os três sincronizados. <b>Máscaras por router:</b> cartão “Configuração de máscaras” (dropdown + prefixos LAN/Bloco + capacidade) ou clique no <b>chip de máscara</b> na Tabela (<code>26</code>, <code>/26</code>, <code>255.255.255.192</code>). <b>↺</b> = automático.",
+ h4:"<b>Sub-redes manuais:</b> crie sub-redes com regras próprias (prefixo fixo, mín. de hosts, início explícito, reservada) ligadas a um router ou à base; o VLSM automático respeita e incorpora esses blocos, com alerta de sobreposição.",
+ h5:"<b>Renomear:</b> duplo clique no nó edita o nome no próprio cartão; ou use o campo “Nome” em Detalhes.",
+ h6:"<b>Painéis:</b> cada cartão da direita é <b>redimensionável</b> (canto inferior direito) e tem rolagem própria; a coluna inteira também rola.",
+ h7:"<b>Sumários:</b> menor prefixo que agrega as sub-redes internas de cada router, com cobertura exata ou sobra.",
+ h8:"<b>Projeto:</b> <b>NOVO</b> cria topologia do zero; ao abrir, o app carrega sempre o exemplo demonstrativo.",
+ h9:"<b>Tema/Idioma:</b> 🌙 claro/escuro; idiomas pt-BR, es, en, eo. <b>⬇ PNG / ⬇ JSON</b> exportam; <b>⬆ JSON</b> restaura.",
+ hn:"Gateways = 1º IP útil de cada LAN · Switches/APs consomem 1 IP de gerenciamento."},
+es:{app:"NetPlanner v7 — Calculadora Visual de Subredes",new:"NUEVO",base:"Red base",org:"⤧ Organizar",fit:"⛶ Encuadrar",help:"Ayuda",
+ b_mask:"Máscara de la red base (edite para cambiar el CIDR)",
+ t_json_dl:"Exportar topología (JSON)",t_json_up:"Importar JSON",t_png:"Exportar imagen PNG",t_theme:"Cambiar tema",
+ c_sum:"Resumen de la red",c_mask:"Configuración de máscaras",r_link:"Prefijo de enlace P2P",mk_router:"Router a configurar",
+ c_det:"Detalles",c_tab:"Tabla de subredes (VLSM)",c_agg:"Sumarios de ruta (agregación)",c_dns:"DNS / Nombres de host",c_man:"Subredes manuales",
+ th_sub:"Subred",th_cidr:"CIDR / Máscara",th_range:"Rango utilizable",
+ s_base:"Base",s_mask:"másc.",s_bcast:"Difusión/último",s_dev:"Dispositivos",s_ip:"con IP",s_depth:"profund.",s_subs:"Subredes",s_lan:"LAN",s_links:"enlaces",s_dom:"Dominio DNS",s_util:"Utilización:",s_of:"de",s_addr:"direcciones",
+ d_type:"Tipo",d_name:"Nombre",d_host:"Hostname",d_ip:"IP",d_wan:"IP WAN/enlace",d_mask:"Máscara",d_gw:"Puerta de enlace",d_net:"Red",d_bcast:"Difusión",d_range:"Rango útil",d_hosts:"Hosts útiles",d_block:"Bloque asignado",d_sum:"Sumario anunciado",d_routes:"rutas → 1",d_lan:"Prefijo LAN",d_blk:"Prefijo Bloque",d_min:"Capacidad mín. de hosts",d_auto:"Volver a automático",d_autoph:"auto",d_click:"Haga clic en un dispositivo… (doble clic renombra)",
+ mk_sel:"Seleccione un router arriba (o en el lienzo) para configurar sus máscaras.",mk_edit:"Clic para editar la máscara",mk_auto:"Automático:",
+ m_owner:"Dueño",m_mode:"Regla",m_prefix:"Prefijo fijo",m_hosts:"Mín. de hosts",m_val:"Valor",m_start:"Inicio (opcional)",m_res:"reservada",m_add:"Añadir",m_save:"Guardar",m_cancel:"Cancelar",m_base:"Base (fuera de routers)",m_empty:"Ninguna subred manual…",m_edit:"Editar",m_del:"Eliminar",
+ k_block:"Bloque",th_hosts:"hosts",a_agg:"Agrega",a_subs:"subredes",a_exact:"cobertura exacta",a_waste:"sobra",a_empty:"Añada routers hijos para ver agregaciones…",
+ n_dom:"Dominio",n_host:"Host",copied:"✓ copiado",
+ w_lan:"La máscara personalizada de la LAN de {0} (/{1}) no admite {2} hosts.",w_block:"Bloque personalizado de {0} (/{1}) menor que la demanda interna.",
+ w_base:"La demanda de {0} direcciones excede la base /{1} ({2}). CIDR mínimo: /{3}.",w_fit:"Bloque insuficiente para asignación interna de {0}.",
+ w_over:"Solapamiento: {0} colisiona con {1}.",w_align:"Dirección inicial no alineada al tamaño de la subred.",w_manfit:"La subred manual {0} no cabe en {1}.",
+ c_del:"¿Eliminar {0} y {1} dispositivo(s) más?",c_new:"¿Crear proyecto nuevo? Se descartará el actual.",
+ t_router:"Router",t_switch:"Conmutador",t_ap:"Punto de acceso",t_server:"Servidor",t_pc:"PC",t_laptop:"Portátil",t_tablet:"Tableta",t_phone:"Teléfono IP",t_camera:"Cámara IP",t_printer:"MFP/Impres",t_ups:"SAI",
+ m_title:"Cómo usar",m_ok:"Entendido",
+ h1:"<b>Añadir / Eliminar:</b> botones <b>+</b> y <b>−</b> (jerarquía infinita). <b>Shift+arrastrar</b> y soltar sobre otro nodo reinjerta la rama.",
+ h2:"<b>IPv4 ↔ IPv6:</b> selector arriba (aritmética BigInt de 128 bits).",
+ h3:"<b>Base:</b> edite IP, <b>máscara</b> o slider — los tres sincronizados. <b>Máscaras por router:</b> tarjeta “Configuración de máscaras” (desplegable + prefijos LAN/Bloque + capacidad) o clic en el <b>chip de máscara</b> en la Tabla (<code>26</code>, <code>/26</code>, <code>255.255.255.192</code>). <b>↺</b> = automático.",
+ h4:"<b>Subredes manuales:</b> cree subredes con reglas propias (prefijo fijo, mín. de hosts, inicio explícito, reservada) vinculadas a un router o a la base; el VLSM automático respeta e incorpora esos bloques, con aviso de solapamiento.",
+ h5:"<b>Renombrar:</b> doble clic en el nodo edita el nombre en la propia tarjeta; o use el campo “Nombre” en Detalles.",
+ h6:"<b>Paneles:</b> cada tarjeta de la derecha es <b>redimensionable</b> (esquina inferior derecha) y tiene scroll propio; la columna entera también rueda.",
+ h7:"<b>Sumarios:</b> menor prefijo que agrega las subredes internas de cada router, con cobertura exacta o sobrante.",
+ h8:"<b>Proyecto:</b> <b>NUEVO</b> crea topología desde cero; al abrir, la app carga siempre el ejemplo demostrativo.",
+ h9:"<b>Tema/Idioma:</b> 🌙 claro/oscuro; idiomas pt-BR, es, en, eo. <b>⬇ PNG /  JSON</b> exportan; <b>⬆ JSON</b> restaura.",
+ hn:"Gateways = 1er IP útil de cada LAN · Switches/APs consumen 1 IP de gestión."},
+en:{app:"NetPlanner v7 — Visual Subnet Calculator",new:"NEW",base:"Base network",org:"⤧ Arrange",fit:"⛶ Fit",help:"Help",
+ b_mask:"Base network mask (edit to change the CIDR)",
+ t_json_dl:"Export topology (JSON)",t_json_up:"Import JSON",t_png:"Export PNG image",t_theme:"Toggle theme",
+ c_sum:"Network summary",c_mask:"Mask configuration",r_link:"P2P link prefix",mk_router:"Router to configure",
+ c_det:"Details",c_tab:"Subnet table (VLSM)",c_agg:"Route summaries (aggregation)",c_dns:"DNS / Hostnames",c_man:"Manual subnets",
+ th_sub:"Subnet",th_cidr:"CIDR / Mask",th_range:"Usable range",
+ s_base:"Base",s_mask:"mask",s_bcast:"Broadcast/last",s_dev:"Devices",s_ip:"with IP",s_depth:"depth",s_subs:"Subnets",s_lan:"LAN",s_links:"links",s_dom:"DNS domain",s_util:"Utilization:",s_of:"of",s_addr:"addresses",
+ d_type:"Type",d_name:"Name",d_host:"Hostname",d_ip:"IP",d_wan:"WAN/uplink IP",d_mask:"Mask",d_gw:"Gateway",d_net:"Network",d_bcast:"Broadcast",d_range:"Usable range",d_hosts:"Usable hosts",d_block:"Allocated block",d_sum:"Advertised summary",d_routes:"routes → 1",d_lan:"LAN prefix",d_blk:"Block prefix",d_min:"Min host capacity",d_auto:"Back to auto",d_autoph:"auto",d_click:"Click a device… (double-click renames)",
+ mk_sel:"Select a router above (or on the canvas) to configure its masks.",mk_edit:"Click to edit the mask",mk_auto:"Auto:",
+ m_owner:"Owner",m_mode:"Rule",m_prefix:"Fixed prefix",m_hosts:"Min hosts",m_val:"Value",m_start:"Start (optional)",m_res:"reserved",m_add:"Add",m_save:"Save",m_cancel:"Cancel",m_base:"Base (outside routers)",m_empty:"No manual subnets…",m_edit:"Edit",m_del:"Remove",
+ k_block:"Block",th_hosts:"hosts",a_agg:"Aggregates",a_subs:"subnets",a_exact:"exact coverage",a_waste:"waste",a_empty:"Add child routers to see aggregations…",
+ n_dom:"Domain",n_host:"Host",copied:"✓ copied",
+ w_lan:"Custom LAN mask for {0} (/{1}) cannot fit {2} hosts.",w_block:"Custom block for {0} (/{1}) smaller than internal demand.",
+ w_base:"Demand of {0} addresses exceeds base /{1} ({2}). Minimum CIDR: /{3}.",w_fit:"Block insufficient for internal allocation of {0}.",
+ w_over:"Overlap: {0} collides with {1}.",w_align:"Start address not aligned to subnet size.",w_manfit:"Manual subnet {0} does not fit in {1}.",
+ c_del:"Remove {0} and {1} more device(s)?",c_new:"Create new project? The current one will be discarded.",
+ t_router:"Router",t_switch:"Switch",t_ap:"Access Pt",t_server:"Server",t_pc:"PC",t_laptop:"Laptop",t_tablet:"Tablet",t_phone:"IP Phone",t_camera:"IP Cam",t_printer:"MFP/Print",t_ups:"UPS",
+ m_title:"How to use",m_ok:"Got it",
+ h1:"<b>Add / Remove:</b> <b>+</b> and <b>−</b> buttons (infinite hierarchy). <b>Shift+drag</b> onto another node re-grafts the branch.",
+ h2:"<b>IPv4 ↔ IPv6:</b> top selector (128-bit BigInt arithmetic).",
+ h3:"<b>Base:</b> edit IP, <b>mask</b> or slider — all three synced. <b>Per-router masks:</b> “Mask configuration” card (dropdown + LAN/Block prefixes + capacity) or click the <b>mask chip</b> in the Table (<code>26</code>, <code>/26</code>, <code>255.255.255.192</code>). <b>↺</b> = auto.",
+ h4:"<b>Manual subnets:</b> create subnets with your own rules (fixed prefix, min hosts, explicit start, reserved) attached to a router or the base; auto VLSM respects and embeds those blocks, with overlap warnings.",
+ h5:"<b>Rename:</b> double-click a node to edit the name on the card itself; or use the “Name” field in Details.",
+ h6:"<b>Panels:</b> every right-hand card is <b>resizable</b> (bottom-right corner) with its own scrolling; the whole column scrolls too.",
+ h7:"<b>Summaries:</b> smallest prefix aggregating each router's internal subnets, with exact coverage or waste.",
+ h8:"<b>Project:</b> <b>NEW</b> creates a topology from scratch; on open, the app always loads the demo example.",
+ h9:"<b>Theme/Language:</b> 🌙 light/dark; languages pt-BR, es, en, eo. <b>⬇ PNG /  JSON</b> export; <b>⬆ JSON</b> restores.",
+ hn:"Gateways = 1st usable IP of each LAN · Switches/APs take 1 management IP."},
+eo:{app:"NetPlanner v7 — Vida Kalkulilo de Subretoj",new:"NOVA",base:"Baza reto",org:"⤧ Aranĝi",fit:"⛶ Enkadrigi",help:"Helpo",
+ b_mask:"Masko de la baza reto (redaktu por ŝanĝi la CIDR)",
+ t_json_dl:"Eksporti topologion (JSON)",t_json_up:"Importi JSON",t_png:"Eksporti PNG-bildon",t_theme:"Ŝalti etoson",
+ c_sum:"Reta resumo",c_mask:"Agordo de maskoj",r_link:"P2P-ligila prefikso",mk_router:"Rutero agordenda",
+ c_det:"Detaloj",c_tab:"Tabelo de subretoj (VLSM)",c_agg:"Rut-sumarioj (agregado)",c_dns:"DNS / Gastnomoj",c_man:"Manaj subretoj",
+ th_sub:"Subreto",th_cidr:"CIDR / Masko",th_range:"Uzebla intervalo",
+ s_base:"Bazo",s_mask:"masko",s_bcast:"Elsendo/lasta",s_dev:"Aparatoj",s_ip:"kun IP",s_depth:"profundo",s_subs:"Subretoj",s_lan:"LAN",s_links:"ligiloj",s_dom:"DNS-domajno",s_util:"Uzado:",s_of:"el",s_addr:"adresoj",
+ d_type:"Tipo",d_name:"Nomo",d_host:"Gastnomo",d_ip:"IP",d_wan:"IP WAN/ligilo",d_mask:"Masko",d_gw:"Kluzo",d_net:"Reto",d_bcast:"Elsendo",d_range:"Uzebla intervalo",d_hosts:"Uzeblaj gastoj",d_block:"Atribuita bloko",d_sum:"Anoncita sumario",d_routes:"rutoj → 1",d_lan:"LAN-prefikso",d_blk:"Blok-prefikso",d_min:"Minimuma gastkapacito",d_auto:"Reveni al aŭtomata",d_autoph:"aŭto",d_click:"Alklaku aparaton… (duobla klako renomas)",
+ mk_sel:"Elektu ruteron supre (aŭ sur la kanvaso) por agordi ĝiajn maskojn.",mk_edit:"Klaku por redakti la maskon",mk_auto:"Aŭtomata:",
+ m_owner:"Posedanto",m_mode:"Regulo",m_prefix:"Fiksa prefikso",m_hosts:"Min. gastoj",m_val:"Valoro",m_start:"Komenco (laŭvole)",m_res:"rezervita",m_add:"Aldoni",m_save:"Konservi",m_cancel:"Nuligi",m_base:"Bazo (ekster ruteroj)",m_empty:"Neniuj manaj subretoj…",m_edit:"Redakti",m_del:"Forigi",
+ k_block:"Bloko",th_hosts:"gastoj",a_agg:"Agregas",a_subs:"subretoj",a_exact:"ekzakta kovro",a_waste:"restas",a_empty:"Aldonu idajn ruterojn por vidi agregadojn…",
+ n_dom:"Domajno",n_host:"Gasto",copied:"✓ kopiite",
+ w_lan:"Propra LAN-masko de {0} (/{1}) ne enhavas {2} gastojn.",w_block:"Propra bloko de {0} (/{1}) malpli granda ol la interna bezono.",
+ w_base:"Bezo de {0} adresoj superas la bazon /{1} ({2}). Minimuma CIDR: /{3}.",w_fit:"Bloko nesufiĉa por interna atribuo de {0}.",
+ w_over:"Superado: {0} kolizias kun {1}.",w_align:"Komencadreco ne alineita al la subreta grandeco.",w_manfit:"Mana subreto {0} ne eniras en {1}.",
+ c_del:"Forigi {0} kaj plu {1} aparato(j)n?",c_new:"Krei novan projekton? La nuna forĵetiĝos.",
+ t_router:"Rutero",t_switch:"Retŝaltilo",t_ap:"Alirpunkto",t_server:"Servilo",t_pc:"Komputilo",t_laptop:"Tekkomputilo",t_tablet:"Tabulkomputilo",t_phone:"IP-telefono",t_camera:"IP-kamerao",t_printer:"MFP/Presilo",t_ups:"UPS",
+ m_title:"Kiel uzi",m_ok:"Komprenite",
+ h1:"<b>Aldoni / Forigi:</b> butonoj <b>+</b> kaj <b>−</b> (senlima hierarkio). <b>Shift+treni</b> kaj lasi sur alia nodo re-greftas la branĉon.",
+ h2:"<b>IPv4 ↔ IPv6:</b> elektilo supre (128-bita BigInt-aritmetiko).",
+ h3:"<b>Bazo:</b> redaktu IP, <b>maskon</b> aŭ glitilon — la tri sinkronaj. <b>Maskoj po rutero:</b> karto “Agordo de maskoj” (falmenuo + LAN/Blok-prefiksoj + kapacito) aŭ klaku la <b>masko-ĉipon</b> en la Tabelo (<code>26</code>, <code>/26</code>, <code>255.255.255.192</code>). <b>↺</b> = aŭtomata.",
+ h4:"<b>Manaj subretoj:</b> kreu subretojn kun propraj reguloj (fiksa prefikso, min. gastoj, eksplicita komenco, rezervita) ligitajn al rutero aŭ al la bazo; la aŭtomata VLSM respektas kaj enigas tiujn blokojn, kun superaverto.",
+ h5:"<b>Renomi:</b> duobla klako sur nodo redaktas la nomon sur la karto mem; aŭ uzu la kampon “Nomo” en Detaloj.",
+ h6:"<b>Paneloj:</b> ĉiu karto dekstre estas <b>regrandigebla</b> (malsupra dekstra angulo) kun propra rulumo; la tuta kolumno ankaŭ rulumas.",
+ h7:"<b>Sumarioj:</b> plej malgranda prefikso kiu agregas la internajn subretojn de ĉiu rutero, kun ekzakta kovro aŭ resto.",
+ h8:"<b>Projekto:</b> <b>NOVA</b> kreas topologion ekde nulo; malfermante, la apo ĉiam ŝargas la demontran ekzemplon.",
+ h9:"<b>Etoso/Lingvo:</b> 🌙 hela/malhela; lingvoj pt-BR, es, en, eo. <b>⬇ PNG /  JSON</b> eksportas; <b>⬆ JSON</b> restarigas.",
+ hn:"Kluzoj = 1-a uzebla IP de ĉiu LAN · Ŝaltiloj/AP-oj konsumas 1 administran IP."}};
+let LANG="pt";
+const t=(k,...a)=>{let s=(I18N[LANG]||I18N.pt)[k]??I18N.pt[k]??k;
+  a.forEach((v,i)=>s=s.replace("{"+i+"}",v));return s;};
+function applyLang(){
+  document.documentElement.lang=LANG==="pt"?"pt-BR":LANG;
+  document.title=t("app");
+  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-title]").forEach(el=>el.title=t(el.dataset.i18nTitle));
+  $("mBody").innerHTML="<ul>"+[1,2,3,4,5,6,7,8,9].map(i=>`<li>${t("h"+i)}</li>`).join("")+"</ul>";
+  $("mFoot").textContent=t("hn");
+  $("mnOk").textContent=t(editingMan!=null?"m_save":"m_add");
+  plus.classList.remove("on");
+  renderAll();}
+
+/* ================= endereçamento BigInt ================= */
+let FAM=4,BITS=32;
+const setFam=f=>{FAM=f;BITS=f===4?32:128;};
+const parseV4=s=>{const p=s.trim().split(".").map(Number);
+  if(p.length!==4||p.some(n=>!Number.isInteger(n)||n<0||n>255))return null;
+  return B(p[0])*(1n<<24n)+B(p[1])*(1n<<16n)+B(p[2])*(1n<<8n)+B(p[3]);};
+const parseV6=s=>{s=s.trim().toLowerCase();if(!s)return null;let parts;
+  if(s.includes("::")){const i=s.indexOf("::"),l=s.slice(0,i),r=s.slice(i+2);
+    const ls=l?l.split(":"):[],rs=r?r.split(":"):[];if(ls.length+rs.length>7)return null;
+    parts=[...ls,...Array(8-ls.length-rs.length).fill("0"),...rs];}
+  else parts=s.split(":");
+  if(parts.length!==8)return null;let v=0n;
+  for(const p of parts){if(!/^[0-9a-f]{1,4}$/.test(p))return null;v=(v<<16n)|B(parseInt(p,16));}
+  return v;};
+const parseIP=s=>FAM===4?parseV4(s):parseV6(s);
+const strV4=n=>{n=BigInt(n);return[Number(n>>24n&255n),Number(n>>16n&255n),Number(n>>8n&255n),Number(n&255n)].join(".");};
+const strV6=v=>{const g=[];for(let i=0;i<8;i++)g.push(Number(v>>BigInt(112-16*i)&0xffffn).toString(16));
+  let best=-1,bl=0,c=-1,cl=0;
+  for(let i=0;i<8;i++){if(g[i]==="0"){if(c<0){c=i;cl=1}else cl++;if(cl>bl){bl=cl;best=c;}}else c=-1;}
+  if(bl<2)return g.join(":");
+  return g.slice(0,best).join(":")+"::"+g.slice(best+bl).join(":");};
+const fmtIp=n=>n==null?"—":(FAM===4?strV4(n):strV6(n));
+const maskOf=c=>c<=0?0n:(((1n<<B(BITS))-1n)<<B(BITS-c))&((1n<<B(BITS))-1n);
+const cidrOfSize=sz=>BITS-(sz.toString(2).length-1);
+const pow2AtLeast=(x,min)=>{let p=min;while(p<x)p*=2n;return p;};
+const fmtRange=(st,sz)=>fmtIp(st+1n)+" – "+fmtIp(st+sz-2n);
+const hostsOf=sz=>(sz-2n).toString();
+const decMask=sz=>FAM===4?strV4(maskOf(cidrOfSize(sz))):("/"+cidrOfSize(sz));
+const baseMaskStr=()=>FAM===4?strV4(maskOf(S.base.cidr)):strV6(maskOf(S.base.cidr));
+const contPrefix=v=>{const b=v.toString(2).padStart(BITS,"0");
+  if(!/^1*0*$/.test(b))return null;const i=b.indexOf("0");return i===-1?BITS:i;};
+function parseMaskPrefix(v){v=(v||"").trim();if(!v)return null;
+  if(FAM===4){if(!v.includes("."))return null;const m=parseV4(v);return m==null?null:contPrefix(m);}
+  if(v.includes(":")){const m=parseV6(v);return m==null?null:contPrefix(m);}
+  if(/^\/?\d{1,3}$/.test(v)){const x=parseInt(v.replace("/",""),10);return x>=1&&x<=BITS?x:null;}
+  return null;}
+function parseMask(v){v=(v||"").trim();if(!v)return null;
+  if(v.includes(".")&&FAM===4){const m=parseV4(v);return m==null?null:contPrefix(m);}
+  if(/^\/?\d{1,3}$/.test(v)){const x=parseInt(v.replace("/",""),10);return x>=1&&x<=BITS?x:null;}
+  return null;}
+function cover(ints){
+  let minS=ints[0].start,maxE=ints[0].start+ints[0].size,sum=ints[0].size;
+  for(const s of ints){if(s.start<minS)minS=s.start;const e=s.start+s.size;if(e>maxE)maxE=e;sum+=s.size;}
+  const xor=minS^(maxE-1n);
+  const p=xor===0n?BITS:BITS-(xor.toString(2).length);
+  const size=1n<<B(BITS-p),start=minS&maskOf(p);
+  return{start,size,sum,exact:size===sum,waste:Number((size-sum)*10000n/size)/100,count:ints.length};}
+
+/* ================= estado ================= */
+const TYPES={router:{i:"i-router",k:"t_router"},switch:{i:"i-switch",k:"t_switch"},ap:{i:"i-ap",k:"t_ap"},
+ server:{i:"i-server",k:"t_server"},pc:{i:"i-pc",k:"t_pc"},laptop:{i:"i-laptop",k:"t_laptop"},tablet:{i:"i-tablet",k:"t_tablet"},
+ phone:{i:"i-phone",k:"t_phone"},camera:{i:"i-cam",k:"t_camera"},printer:{i:"i-print",k:"t_printer"},ups:{i:"i-ups",k:"t_ups"}};
+const S={nodes:new Map(),root:null,sel:null,domain:"corp.local",linkCidr:30,manual:[],mkSel:null,
+  base:{start:0n,cidr:24,size:0n},view:{x:0,y:0,s:1},edgeIps:new Map(),subs:[],sums:[],warns:[],ranges:[]};
+let UID=0,MID=0,editingMan=null;const nameCnt={};
+const $=id=>document.getElementById(id);
+const wrap=$("wrap"),world=$("world"),nodesLayer=$("nodesLayer"),edgesSvg=$("edges"),plus=$("plus"),modal=$("modal");
+function newNode(type,parent,x,y,ov){
+  nameCnt[type]=(nameCnt[type]||0)+1;
+  const name=t(TYPES[type].k)+"-"+nameCnt[type];
+  const n={id:++UID,type,name,host:name.toLowerCase().replace(/[^a-z0-9-]/g,"-"),
+    parent,children:[],x,y,calc:{},ov:ov||{},el:null};
+  S.nodes.set(n.id,n);if(parent)parent.children.push(n);return n;}
+const subtree=n=>[n,...n.children.flatMap(subtree)];
+const isAnc=(a,n)=>{let p=n.parent;while(p){if(p===a)return true;p=p.parent;}return false;};
+const mSize=m=>m.mode==="prefix"?1n<<B(BITS-m.val):pow2AtLeast(B(m.val)+2n,4n);
+const curMkRouter=()=>S.mkSel!=null?S.nodes.get(S.mkSel):null;
+function selectNode(n){S.sel=n;if(n&&n.type==="router")S.mkSel=n.id;renderAll();}
+
+/* ================= VLSM recursivo + manuais + sumários ================= */
+function recompute(){
+  const root=S.root,base=S.base;base.size=1n<<B(BITS-base.cidr);base.start&=maskOf(base.cidr);
+  const memo=new Map();S.edgeIps.clear();S.subs=[];S.sums=[];S.warns=[];S.ranges=[];
+  const LINK=1n<<B(BITS-S.linkCidr);
+  const manOf=id=>S.manual.filter(m=>m.owner===id);
+  const check=(name,start,size)=>{for(const r of S.ranges)
+    if(start<r.start+r.size&&r.start<start+size){S.warns.push(t("w_over",name,r.name));break;}};
+  const analyze=r=>{
+    if(memo.has(r.id))return memo.get(r.id);
+    const lan=[r],rch=[];
+    (function walk(n){for(const c of n.children){
+      if(c.type==="router"){const link=n===r?"p2p":"lan";rch.push({node:c,link});if(link==="lan")lan.push(c);}
+      else{lan.push(c);walk(c);}}})(r);
+    let autoLan=pow2AtLeast(B(lan.length)+2n,4n);
+    if(r.ov.min)autoLan=autoLan>pow2AtLeast(B(r.ov.min)+2n,4n)?autoLan:pow2AtLeast(B(r.ov.min)+2n,4n);
+    let lanSize=autoLan;
+    if(r.ov.lan!=null){lanSize=1n<<B(BITS-r.ov.lan);
+      if(lanSize<B(lan.length)+2n)S.warns.push(t("w_lan",r.name,r.ov.lan,lan.length));}
+    const kids=rch.map(rc=>({rc,sz:analyze(rc.node).size+(rc.link==="p2p"?LINK:0n)})).sort((a,b)=>b.sz-a.sz);
+    const manSz=manOf(r.id).reduce((s,m)=>s+mSize(m),0n);
+    const total=lanSize+manSz+kids.reduce((s,k)=>s+k.sz,0n);
+    const autoBlock=pow2AtLeast(total,4n);let size=autoBlock;
+    if(r.ov.block!=null){size=1n<<B(BITS-r.ov.block);
+      if(size<total)S.warns.push(t("w_block",r.name,r.ov.block));}
+    const rec={lan,lanSize,kids,size,autoLanCidr:cidrOfSize(autoLan),autoBlockCidr:cidrOfSize(autoBlock)};
+    memo.set(r.id,rec);return rec;};
+  const rootRec=analyze(root);
+  if(rootRec.size>base.size)
+    S.warns.push(t("w_base",rootRec.size,base.cidr,base.size,cidrOfSize(rootRec.size)));
+  (function allocate(r,start,depth){
+    const rec=memo.get(r.id),bEnd=start+rec.size;
+    r.calc.block={start,size:rec.size};
+    S.subs.push({depth,kind:"bloco",name:r.name,rid:r.id,start,size:rec.size});
+    S.ranges.push({start,size:rec.size,name:r.name});
+    let cur=start;
+    const place=sz=>{cur=((cur+sz-1n)/sz)*sz;const s=cur;cur+=sz;
+      if(cur>bEnd&&!S.warns.some(w=>w.startsWith(t("w_fit",""))))S.warns.push(t("w_fit",r.name));return s;};
+    const ints=[];
+    for(const m of manOf(r.id)){const sz=mSize(m);
+      let st=m.startIp!=null?parseIP(m.startIp):null;
+      if(st!=null){if(st%sz!==0n){S.warns.push(t("w_align"));st=null;}
+        else if(st<start||st+sz>bEnd){S.warns.push(t("w_manfit",m.name,r.name));st=null;}}
+      if(st==null)st=place(sz);else cur=st+sz>cur?st+sz:cur;
+      check(m.name,st,sz);S.ranges.push({start:st,size:sz,name:m.name});
+      m.calc={start:st,size:sz};ints.push({start:st,size:sz});
+      S.subs.push({depth:depth+1,kind:"man",name:m.name,mid:m.id,start:st,size:sz,res:m.reserved});}
+    const ls=place(rec.lanSize),lanSub={start:ls,size:rec.lanSize,gw:ls+1n,name:r.name+" · LAN"};
+    r.calc.lan=lanSub;S.subs.push({depth,kind:"lan",name:r.name,rid:r.id,start:ls,size:rec.lanSize});
+    S.ranges.push({start:ls,size:rec.lanSize,name:lanSub.name});ints.push({start:ls,size:rec.lanSize});
+    rec.lan.forEach((n,i)=>{const ip=ls+1n+B(i);
+      if(n.type==="router"){if(i===0){n.calc.ip=ip;n.calc.subnet=lanSub;}else{n.calc.wan=ip;n.calc.wanSub=lanSub;}}
+      else{n.calc.ip=ip;n.calc.subnet=lanSub;}});
+    for(const k of rec.kids){const c=k.rc.node;
+      if(k.rc.link==="p2p"){const lk=place(LINK),lsub={start:lk,size:LINK,gw:lk+1n,name:r.name+"↔"+c.name};
+        c.calc.wan=lk+2n;c.calc.wanSub=lsub;S.edgeIps.set(c.id,fmtIp(lk)+"/"+cidrOfSize(LINK));
+        S.subs.push({depth:depth+1,kind:"link",name:lsub.name,start:lk,size:LINK});
+        S.ranges.push({start:lk,size:LINK,name:lsub.name});ints.push({start:lk,size:LINK});
+        const bs=place(k.sz-LINK);S.ranges.push({start:bs,size:k.sz-LINK,name:c.name});
+        ints.push({start:bs,size:k.sz-LINK});allocate(c,bs,depth+1);}
+      else{const bs=place(k.sz);S.ranges.push({start:bs,size:k.sz,name:c.name});
+        ints.push({start:bs,size:k.sz});allocate(c,bs,depth+1);}}
+    const agg=cover(ints);r.calc.summary=agg;
+    if(ints.length>=2)S.sums.push({name:r.name,...agg});
+  })(root,base.start,0);
+  let cur=root.calc.block.start+root.calc.block.size;
+  for(const m of S.manual.filter(m=>m.owner===0)){const sz=mSize(m);
+    let st=m.startIp!=null?parseIP(m.startIp):null;
+    if(st!=null){if(st%sz!==0n){S.warns.push(t("w_align"));st=null;}
+      else if(st<base.start||st+sz>base.start+base.size){S.warns.push(t("w_manfit",m.name,t("m_base")));st=null;}}
+    if(st==null){cur=((cur+sz-1n)/sz)*sz;st=cur;cur+=sz;}
+    if(st+sz>base.start+base.size)S.warns.push(t("w_manfit",m.name,t("m_base")));
+    check(m.name,st,sz);S.ranges.push({start:st,size:sz,name:m.name});
+    m.calc={start:st,size:sz};
+    S.subs.push({depth:0,kind:"man",name:m.name,mid:m.id,start:st,size:sz,res:m.reserved});}
+  for(const m of S.manual)if(!m.calc)m.calc=null;
+  const bEnd=base.start+base.size;
+  for(const n of S.nodes.values())
+    n.calc.out=(n.calc.ip!=null&&(n.calc.ip<base.start||n.calc.ip>=bEnd))||
+      (n.calc.block&&(n.calc.block.start<base.start||n.calc.block.start+n.calc.block.size>bEnd));
+  renderAll();}
+
+/* ================= render ================= */
+function nodeEl(n){
+  const d=document.createElement("div");d.className="node"+(n===S.root?" root":"");d.dataset.id=n.id;
+  d.innerHTML=`<button class="nbtn minus" title="−">−</button><button class="nbtn plus" title="+">+</button>
+   <div class="ico"><svg><use href="#${TYPES[n.type].i}"/></svg></div>
+   <div class="nm"></div><div class="ip"></div><div class="bdg" style="display:none"></div>`;
+  d.querySelector(".plus").addEventListener("pointerdown",e=>e.stopPropagation());
+  d.querySelector(".minus").addEventListener("pointerdown",e=>e.stopPropagation());
+  d.querySelector(".plus").addEventListener("click",e=>{e.stopPropagation();openPlus(n,e.clientX,e.clientY);});
+  d.querySelector(".minus").addEventListener("click",e=>{e.stopPropagation();removeNode(n);});
+  d.addEventListener("pointerdown",e=>startDrag(n,e));
+  d.addEventListener("dblclick",e=>{e.stopPropagation();inlineRename(n,d);});
+  nodesLayer.appendChild(d);n.el=d;return d;}
+function inlineRename(n,d){
+  const nm=d.querySelector(".nm");if(nm.querySelector("input"))return;
+  const inp=document.createElement("input");inp.value=n.name;
+  nm.textContent="";nm.appendChild(inp);inp.focus();inp.select();
+  inp.addEventListener("pointerdown",e=>e.stopPropagation());
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter")inp.blur();if(e.key==="Escape"){inp.value=n.name;inp.blur();}});
+  inp.addEventListener("blur",()=>{const v=inp.value.trim();if(v)n.name=v;recompute();},{once:true});}
+function renderAll(){
+  for(const n of S.nodes.values()){if(!n.el)nodeEl(n);
+    const nm=n.el.querySelector(".nm");
+    if(!nm.querySelector("input"))nm.textContent=n.name;
+    n.el.title=n.host+"."+S.domain;
+    n.el.querySelector(".ip").textContent=n.calc.ip!=null?fmtIp(n.calc.ip):(n.calc.wan!=null?"WAN "+fmtIp(n.calc.wan):"—");
+    const b=n.el.querySelector(".bdg");
+    if(n.type==="router"&&n.calc.block){b.style.display="";b.textContent=fmtIp(n.calc.block.start)+"/"+cidrOfSize(n.calc.block.size);}
+    else b.style.display="none";
+    n.el.classList.toggle("err",!!n.calc.out);n.el.classList.toggle("sel",S.sel===n);
+    n.el.style.left=n.x+"px";n.el.style.top=n.y+"px";}
+  let svg="";
+  for(const n of S.nodes.values())if(n.parent){const p=n.parent;
+    svg+=`<path d="M${p.x},${p.y} C${p.x},${p.y+(n.y-p.y)/2} ${n.x},${n.y-(n.y-p.y)/2} ${n.x},${n.y}"/>`;
+    const lb=S.edgeIps.get(n.id);
+    if(lb)svg+=`<text x="${(p.x+n.x)/2+6}" y="${(p.y+n.y)/2-6}">${lb}</text>`;}
+  edgesSvg.innerHTML=svg;renderSide();}
+const setVal=(el,v)=>{if(document.activeElement!==el)el.value=v;};
+function renderSide(){
+  const base=S.base,ips=[...S.nodes.values()].filter(n=>n.calc.ip!=null).length;
+  const depth=n=>n.parent?1+depth(n.parent):0;
+  const maxD=Math.max(...[...S.nodes.values()].map(depth));
+  const pct=base.size>0n?Number(B(ips)*10000n/base.size)/100:0;
+  $("sumBody").innerHTML=`<div class="kv">
+   <b>${t("s_base")}</b><code>${fmtIp(base.start)}/${base.cidr} · ${t("s_mask")} ${decMask(base.size)}</code>
+   <b>${t("s_bcast")}</b><code>${fmtIp(base.start+base.size-1n)}</code>
+   <b>${t("s_dev")}</b><code>${S.nodes.size} (${ips} ${t("s_ip")}) · ${t("s_depth")} ${maxD}</code>
+   <b>${t("s_subs")}</b><code>${S.subs.filter(s=>s.kind==="lan").length} ${t("s_lan")} · ${S.subs.filter(s=>s.kind==="link").length} ${t("s_links")} · ${S.subs.filter(s=>s.kind==="man").length} 🧩</code>
+   <b>${t("s_dom")}</b><code>${S.domain}</code></div>
+   <div class="bar"><i style="width:${Math.min(100,pct)}%"></i></div>
+   <small style="color:var(--ink-2)">${t("s_util")} ${ips} ${t("s_of")} ${base.size} ${t("s_addr")} (${pct>0&&pct<0.001?"<0,001":pct.toFixed(2)}%)</small>`;
+  const w=$("warnBox");w.className="warn"+(S.warns.length?" on":"");w.innerHTML=S.warns.join("<br>");
+  const routers=[...S.nodes.values()].filter(n=>n.type==="router");
+  if(S.mkSel==null||!S.nodes.has(S.mkSel))S.mkSel=routers[0]?.id??null;
+  const mk=$("mkRouter"),keepMk=String(S.mkSel??"");
+  mk.innerHTML=routers.map(n=>`<option value="${n.id}">${n.name}</option>`).join("");
+  if([...mk.options].some(o=>o.value===keepMk))mk.value=keepMk;
+  const r=curMkRouter();
+  ["mkLan","mkBlk","mkMin","mkLanR","mkBlkR","mkMinR"].forEach(id=>$(id).disabled=!r);
+  if(r){setVal($("mkLan"),r.ov.lan??"");setVal($("mkBlk"),r.ov.block??"");setVal($("mkMin"),r.ov.min??"");
+    $("mkAuto").textContent=`${t("mk_auto")} LAN /${r.calc.autoLanCidr??"–"} · ${t("d_block")} /${r.calc.autoBlockCidr??"–"}`;}
+  else{$("mkLan").value=$("mkBlk").value=$("mkMin").value="";$("mkAuto").textContent=t("mk_sel");}
+  const d=$("detBody");
+  if(!S.sel)d.innerHTML=`<i style="color:var(--ink-2)">${t("d_click")}</i>`;
+  else{const n=S.sel,s=n.calc.subnet,rows=[[t("d_type"),t(TYPES[n.type].k)],
+    [t("d_name"),`<input data-nm value="${n.name}">`],[t("d_host"),`<input data-hn value="${n.host}">`]];
+    if(n.calc.ip!=null)rows.push([t("d_ip"),fmtIp(n.calc.ip)]);
+    if(n.calc.wan!=null)rows.push([t("d_wan"),fmtIp(n.calc.wan)+(n.calc.wanSub?" ("+n.calc.wanSub.name+")":"")]);
+    if(s)rows.push([t("d_mask"),decMask(s.size)],[t("d_gw"),fmtIp(s.gw)],[t("d_net"),fmtIp(s.start)],
+      [t("d_bcast"),fmtIp(s.start+s.size-1n)],[t("d_range"),fmtRange(s.start,s.size)],[t("d_hosts"),hostsOf(s.size)]);
+    if(n.calc.block)rows.push([t("d_block"),fmtIp(n.calc.block.start)+"/"+cidrOfSize(n.calc.block.size)+` (${n.calc.block.size})`]);
+    if(n.type==="router"&&n.calc.summary)rows.push([t("d_sum"),
+      `${fmtIp(n.calc.summary.start)}/${cidrOfSize(n.calc.summary.size)} <span class="ok">(${n.calc.summary.count} ${t("d_routes")})</span>`]);
+    d.innerHTML=`<div class="kv">${rows.map(x=>`<b>${x[0]}</b><code>${x[1]}</code>`).join("")}</div>`;}
+  const own=$("mnOwner"),keep=own.value;
+  own.innerHTML=`<option value="0">${t("m_base")}</option>`+routers.map(n=>`<option value="${n.id}">${n.name}</option>`).join("");
+  if([...own.options].some(o=>o.value===keep))own.value=keep;
+  $("mnList").innerHTML=S.manual.length?S.manual.map(m=>`<div class="mrow">
+    <span>${m.reserved?"🚫":"🧩"}</span><code>${m.name}${m.calc?` · ${fmtIp(m.calc.start)}/${cidrOfSize(m.calc.size)}`:""}</code>
+    <button data-me="${m.id}" title="${t("m_edit")}">✎</button>
+    <button data-md="${m.id}" class="del" title="${t("m_del")}">🗑</button></div>`).join("")
+    :`<i style="color:var(--ink-2)">${t("m_empty")}</i>`;
+  $("subTab").tBodies[0].innerHTML=S.subs.map(s=>{
+    let chip;
+    if(s.kind==="lan")chip=`<button class="mchip${(S.nodes.get(s.rid)?.ov.lan!=null)?" ovl":""}" data-mk="lan" data-rid="${s.rid}" title="${t("mk_edit")}">${decMask(s.size)}</button>`;
+    else if(s.kind==="bloco")chip=`<button class="mchip${(S.nodes.get(s.rid)?.ov.block!=null)?" ovl":""}" data-mk="block" data-rid="${s.rid}" title="${t("mk_edit")}">${decMask(s.size)}</button>`;
+    else if(s.kind==="man")chip=`<button class="mchip" data-mk="man" data-mid="${s.mid}" title="${t("mk_edit")}">${decMask(s.size)}</button>`;
+    else chip=`<button class="mchip ghost" data-mk="link" title="${t("r_link")}">${decMask(s.size)}</button>`;
+    return `<tr class="sub lvl${Math.min(3,s.depth)}">
+    <td>${s.kind==="bloco"?"📦 "+t("k_block")+" "+s.name:s.kind==="lan"?"🟩 "+s.name+" · LAN":s.kind==="man"?(s.res?"🚫 ":" ")+s.name:" "+s.name}</td>
+    <td><code>${fmtIp(s.start)}/${cidrOfSize(s.size)}</code><br>${chip}</td>
+    <td><code>${fmtRange(s.start,s.size)}</code><br><small style="color:var(--ink-2)">${hostsOf(s.size)} ${t("th_hosts")}</small></td></tr>`;}).join("");
+  $("aggBody").innerHTML=S.sums.length?S.sums.map(a=>`<div class="kv" style="margin-bottom:6px">
+     <b>${a.name}</b><code>${fmtIp(a.start)}/${cidrOfSize(a.size)}</code>
+     <b>${t("a_agg")}</b><code>${a.count} ${t("a_subs")} · ${a.exact?`<span class="ok">${t("a_exact")}</span>`:`${t("a_waste")} ${a.waste.toFixed(1)}%`}</code>
+   </div>`).join(""):`<i style="color:var(--ink-2)">${t("a_empty")}</i>`;
+  const dns=[...S.nodes.values()].filter(n=>n.calc.ip!=null);
+  $("dnsBody").innerHTML=`<div class="kv" style="margin-bottom:6px"><b>${t("n_dom")}</b>
+    <code><input id="domIn" value="${S.domain}"></code></div>
+    <table><thead><tr><th>${t("n_host")}</th><th>FQDN</th><th>${FAM===4?"A":"AAAA"}</th></tr></thead><tbody>
+    ${dns.map(n=>`<tr><td>${n.host}</td><td><code>${n.host}.${S.domain}</code></td><td><code>${fmtIp(n.calc.ip)}</code></td></tr>`).join("")}
+    </tbody></table>`;}
+
+/* ================= máscara da base (header) ================= */
+const ipIn=$("ipIn"),mkBase=$("mkBase"),cidrIn=$("cidrIn"),cidrOut=$("cidrOut");
+mkBase.addEventListener("input",()=>{
+  const p=parseMaskPrefix(mkBase.value);
+  if(p==null){mkBase.classList.add("bad");return;}
+  mkBase.classList.remove("bad");
+  cidrIn.value=p;syncBase();});
+function syncBase(){
+  const v=parseIP(ipIn.value);
+  if(v==null){ipIn.classList.add("bad");return;}
+  ipIn.classList.remove("bad");S.base.cidr=+cidrIn.value;
+  S.base.start=v&maskOf(S.base.cidr);ipIn.value=fmtIp(S.base.start);
+  cidrOut.textContent="/"+S.base.cidr;
+  if(document.activeElement!==mkBase)mkBase.value=baseMaskStr();
+  mkBase.classList.remove("bad");
+  recompute();}
+ipIn.addEventListener("input",syncBase);
+cidrIn.addEventListener("input",syncBase);
+
+/* ================= cartão de máscaras: eventos ================= */
+$("mkRouter").addEventListener("change",e=>{S.mkSel=+e.target.value;S.sel=S.nodes.get(S.mkSel)||null;renderAll();});
+$("mkLan").addEventListener("change",e=>{const r=curMkRouter();if(!r)return;
+  const v=e.target.value.trim();if(!v){r.ov.lan=null;recompute();return;}
+  const p=parseMask(v);if(p==null){e.target.classList.add("bad");return;}
+  e.target.classList.remove("bad");r.ov.lan=p;recompute();});
+$("mkBlk").addEventListener("change",e=>{const r=curMkRouter();if(!r)return;
+  const v=e.target.value.trim();if(!v){r.ov.block=null;recompute();return;}
+  const p=parseMask(v);if(p==null){e.target.classList.add("bad");return;}
+  e.target.classList.remove("bad");r.ov.block=p;recompute();});
+$("mkMin").addEventListener("change",e=>{const r=curMkRouter();if(!r)return;
+  const v=e.target.value.trim();if(!v){r.ov.min=null;recompute();return;}
+  const x=parseInt(v,10);if(!Number.isInteger(x)||x<0){e.target.classList.add("bad");return;}
+  e.target.classList.remove("bad");r.ov.min=x;recompute();});
+$("mkLanR").onclick=()=>{const r=curMkRouter();if(r){r.ov.lan=null;recompute();}};
+$("mkBlkR").onclick=()=>{const r=curMkRouter();if(r){r.ov.block=null;recompute();}};
+$("mkMinR").onclick=()=>{const r=curMkRouter();if(r){r.ov.min=null;recompute();}};
+$("subTab").addEventListener("click",e=>{
+  const chip=e.target.closest(".mchip");if(!chip)return;
+  e.stopPropagation();
+  if(chip.dataset.mk==="link"){$("lkIn").focus();return;}
+  if(chip.dataset.mk==="man"){const m=S.manual.find(x=>x.id===+chip.dataset.mid);if(m)startManEdit(m);return;}
+  const r=S.nodes.get(+chip.dataset.rid);if(!r)return;
+  const key=chip.dataset.mk==="lan"?"lan":"block";
+  const td=chip.parentElement,inp=document.createElement("input");
+  inp.value=chip.textContent;td.innerHTML="";td.appendChild(inp);inp.focus();inp.select();
+  inp.addEventListener("keydown",ev=>{if(ev.key==="Enter")inp.blur();if(ev.key==="Escape"){inp.dataset.esc="1";inp.blur();}});
+  inp.addEventListener("blur",()=>{if(inp.dataset.esc){recompute();return;}
+    const v=inp.value.trim();
+    if(!v){r.ov[key]=null;recompute();return;}
+    const p=parseMask(v);if(p==null){recompute();return;}
+    r.ov[key]=p;recompute();},{once:true});});
+
+/* ================= painel detalhes / dns ================= */
+$("detBody").addEventListener("change",e=>{
+  const hn=e.target.closest("input[data-hn]"),nm=e.target.closest("input[data-nm]");
+  if(!S.sel)return;const n=S.sel;
+  if(nm){const v=nm.value.trim();if(v)n.name=v;recompute();return;}
+  if(hn){n.host=hn.value.toLowerCase().replace(/[^a-z0-9-]/g,"-")||n.name.toLowerCase();renderAll();return;}});
+document.addEventListener("change",e=>{
+  if(e.target.id==="domIn"){S.domain=e.target.value.trim().replace(/^\.+|\.+$/g,"").toLowerCase()||"corp.local";renderSide();}});
+$("bHosts").addEventListener("click",()=>{
+  const lines=[...S.nodes.values()].filter(n=>n.calc.ip!=null)
+    .map(n=>`${fmtIp(n.calc.ip)}\t${n.host} ${n.host}.${S.domain}`).join("\n");
+  (navigator.clipboard?navigator.clipboard.writeText(lines):Promise.reject())
+    .then(()=>{$("bHosts").textContent=t("copied");setTimeout(()=>$("bHosts").textContent="⧉ hosts",1400);})
+    .catch(()=>prompt("/etc/hosts:",lines));});
+
+/* ================= regras + sub-redes manuais ================= */
+$("lkIn").addEventListener("change",e=>{
+  const x=parseInt(e.target.value,10);
+  if(!Number.isInteger(x)||x<1||x>BITS-2){e.target.classList.add("bad");return;}
+  e.target.classList.remove("bad");S.linkCidr=x;recompute();});
+$("mnMode").addEventListener("change",e=>{$("mnVal").value=e.target.value==="prefix"?(FAM===4?26:64):50;});
+$("mnOk").addEventListener("click",()=>{
+  const name=$("mnName").value.trim();if(!name){$("mnName").classList.add("bad");return;}
+  $("mnName").classList.remove("bad");
+  const mode=$("mnMode").value,val=parseInt($("mnVal").value,10);
+  const okP=Number.isInteger(val)&&val>=1&&val<=BITS-2, okH=Number.isInteger(val)&&val>=1;
+  if(mode==="prefix"?!okP:!okH){$("mnVal").classList.add("bad");return;}
+  $("mnVal").classList.remove("bad");
+  const st=$("mnStart").value.trim();
+  if(st&&parseIP(st)==null){$("mnStart").classList.add("bad");return;}
+  $("mnStart").classList.remove("bad");
+  const owner=+$("mnOwner").value,res=$("mnRes").checked;
+  if(editingMan!=null){const m=S.manual.find(x=>x.id===editingMan);
+    Object.assign(m,{name,owner,mode,val,startIp:st||null,reserved:res});}
+  else S.manual.push({id:++MID,name,owner,mode,val,startIp:st||null,reserved:res,calc:null});
+  resetManForm();recompute();});
+$("mnCancel").addEventListener("click",resetManForm);
+function resetManForm(){editingMan=null;$("mnName").value="";$("mnStart").value="";$("mnRes").checked=false;
+  $("mnMode").value="prefix";$("mnVal").value=FAM===4?26:64;
+  $("mnOk").textContent=t("m_add");$("mnCancel").style.display="none";}
+function startManEdit(m){editingMan=m.id;$("mnName").value=m.name;$("mnOwner").value=String(m.owner);
+  $("mnMode").value=m.mode;$("mnVal").value=m.val;$("mnStart").value=m.startIp||"";$("mnRes").checked=m.reserved;
+  $("mnOk").textContent=t("m_save");$("mnCancel").style.display="";
+  $("mnForm").scrollIntoView({behavior:"smooth",block:"center"});}
+$("mnList").addEventListener("click",e=>{
+  const ed=e.target.closest("[data-me]"),dl=e.target.closest("[data-md]");
+  if(dl){S.manual=S.manual.filter(m=>m.id!==+dl.dataset.md);
+    if(editingMan===+dl.dataset.md)resetManForm();recompute();return;}
+  if(ed){const m=S.manual.find(x=>x.id===+ed.dataset.me);if(m)startManEdit(m);}});
+
+/* ================= canvas ================= */
+function openPlus(n,x,y){
+  plus.innerHTML=Object.entries(TYPES).map(([k,tp])=>`<button data-t="${k}"><span class="pl-ico"><svg><use href="#${tp.i}"/></svg></span><span>${t(tp.k)}</span></button>`).join("");
+  plus.classList.add("on");const r=plus.getBoundingClientRect();
+  plus.style.left=Math.min(innerWidth-r.width-8,Math.max(8,x-r.width/2))+"px";
+  plus.style.top=Math.min(innerHeight-r.height-8,Math.max(8,y+14))+"px";
+  plus.onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    const a=n.children.length*2.39996-1.2;
+    const c=newNode(b.dataset.t,n,n.x+Math.cos(a)*150,n.y+Math.sin(a)*150);
+    plus.classList.remove("on");selectNode(c);recompute();};}
+addEventListener("pointerdown",e=>{if(!plus.contains(e.target))plus.classList.remove("on");});
+function removeNode(n){
+  if(n===S.root)return;const st=subtree(n);
+  if(st.length>1&&!confirm(t("c_del",n.name,st.length-1)))return;
+  n.parent.children=n.parent.children.filter(c=>c!==n);
+  st.forEach(x=>{x.el?.remove();S.nodes.delete(x.id);});
+  S.manual=S.manual.filter(m=>m.owner!==n.id&&!st.some(s=>s.id===m.owner));
+  if(S.sel&&!S.nodes.has(S.sel.id))S.sel=null;
+  if(S.mkSel!=null&&!S.nodes.has(S.mkSel))S.mkSel=S.root?.id??null;
+  recompute();}
+let drag=null;
+function startDrag(n,e){
+  const r=wrap.getBoundingClientRect(),wx=(e.clientX-r.left-S.view.x)/S.view.s,wy=(e.clientY-r.top-S.view.y)/S.view.s;
+  drag={n,dx:n.x-wx,dy:n.y-wy,moved:false,sx:e.clientX,sy:e.clientY,shift:e.shiftKey};
+  addEventListener("pointermove",moveDrag);addEventListener("pointerup",endDrag,{once:true});}
+function moveDrag(e){if(!drag)return;
+  if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>4)drag.moved=true;
+  const r=wrap.getBoundingClientRect();
+  drag.n.x=(e.clientX-r.left-S.view.x)/S.view.s+drag.dx;
+  drag.n.y=(e.clientY-r.top-S.view.y)/S.view.s+drag.dy;
+  drag.shift=e.shiftKey;renderAll();}
+function endDrag(){removeEventListener("pointermove",moveDrag);
+  if(drag&&!drag.moved){selectNode(drag.n);}
+  else if(drag&&drag.shift){
+    const tgt=[...S.nodes.values()].filter(m=>m!==drag.n&&!isAnc(drag.n,m)&&!isAnc(m,drag.n))
+      .map(m=>({m,d:Math.hypot(m.x-drag.n.x,m.y-drag.n.y)})).sort((a,b)=>a.d-b.d)[0];
+    if(tgt&&tgt.d<90&&tgt.m!==drag.n.parent){
+      drag.n.parent.children=drag.n.parent.children.filter(c=>c!==drag.n);
+      tgt.m.children.push(drag.n);drag.n.parent=tgt.m;recompute();}}
+  drag=null;}
+wrap.addEventListener("pointerdown",e=>{if(e.target.closest(".node"))return;
+  const sx=e.clientX-S.view.x,sy=e.clientY-S.view.y;wrap.classList.add("panning");
+  const mv=ev=>{S.view.x=ev.clientX-sx;S.view.y=ev.clientY-sy;applyView();};
+  addEventListener("pointermove",mv);
+  addEventListener("pointerup",()=>{removeEventListener("pointermove",mv);wrap.classList.remove("panning");},{once:true});});
+wrap.addEventListener("wheel",e=>{e.preventDefault();
+  const r=wrap.getBoundingClientRect(),f=Math.exp(-e.deltaY*0.0012),ns=Math.min(2.5,Math.max(.25,S.view.s*f));
+  S.view.x=(e.clientX-r.left)-((e.clientX-r.left)-S.view.x)*ns/S.view.s;
+  S.view.y=(e.clientY-r.top)-((e.clientY-r.top)-S.view.y)*ns/S.view.s;
+  S.view.s=ns;applyView();},{passive:false});
+const applyView=()=>world.style.transform=`translate(${S.view.x}px,${S.view.y}px) scale(${S.view.s})`;
+const leaves=n=>n.children.length?n.children.reduce((s,c)=>s+leaves(c),0):1;
+function layout(){const R=S.root;R.x=0;R.y=0;
+  (function rec(n,a0,a1){let a=a0;const L=n.children.reduce((s,c)=>s+leaves(c),0)||1;
+    for(const c of n.children){const sh=leaves(c)/L*(a1-a0),mid=a+sh/2;
+      c.x=n.x+Math.cos(mid)*175;c.y=n.y+Math.sin(mid)*175;rec(c,a,a+sh);a+=sh;}})(R,0,Math.PI*2);}
+function fit(){const ns=[...S.nodes.values()];if(!ns.length)return;
+  const xs=ns.map(n=>n.x),ys=ns.map(n=>n.y);
+  const bw=Math.max(...xs)-Math.min(...xs)+280,bh=Math.max(...ys)-Math.min(...ys)+280;
+  const s=Math.min(1.35,Math.max(.28,Math.min(wrap.clientWidth/bw,wrap.clientHeight/bh)));
+  S.view.s=s;S.view.x=wrap.clientWidth/2-(Math.max(...xs)+Math.min(...xs))/2*s;
+  S.view.y=wrap.clientHeight/2-(Math.max(...ys)+Math.min(...ys))/2*s;applyView();}
+$("bOrg").onclick=()=>{layout();fit();renderAll();};
+$("bFit").onclick=fit;
+$("bHelp").onclick=()=>modal.classList.add("on");
+$("mOk").onclick=()=>modal.classList.remove("on");
+modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("on");});
+
+/* ================= tema / idioma / novo ================= */
+const bTheme=$("bTheme");
+function setTheme(th){document.documentElement.dataset.theme=th;bTheme.textContent=th==="dark"?"☀️":"";
+  try{localStorage.setItem("np-theme",th);}catch(e){}}
+bTheme.onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+$("lang").addEventListener("change",e=>{LANG=e.target.value;
+  try{localStorage.setItem("np-lang",LANG);}catch(e){} applyLang();});
+function resetCounters(){for(const k in nameCnt)delete nameCnt[k];UID=0;}
+function clearNodes(){S.nodes.clear();nodesLayer.innerHTML="";S.sel=null;S.mkSel=null;resetCounters();}
+function setBaseDefaults(){cidrIn.min=FAM===4?8:16;cidrIn.max=FAM===4?30:126;cidrIn.value=FAM===4?24:64;
+  ipIn.value=FAM===4?"192.168.0.0":"fd00::";S.base.cidr=+cidrIn.value;
+  S.linkCidr=FAM===4?30:126;$("lkIn").value=S.linkCidr;
+  S.base.start=parseIP(ipIn.value)&maskOf(S.base.cidr);
+  cidrOut.textContent="/"+S.base.cidr;mkBase.value=baseMaskStr();}
+$("bNew").onclick=()=>{
+  if(S.nodes.size>1&&!confirm(t("c_new")))return;
+  clearNodes();S.manual=[];resetManForm();setBaseDefaults();
+  S.root=newNode("router",null,0,0);S.mkSel=S.root.id;
+  recompute();fit();};
+$("fam").addEventListener("change",e=>{
+  setFam(+e.target.value);setBaseDefaults();
+  for(const n of S.nodes.values())n.ov={};
+  syncBase();});
+
+/* ================= exportar / importar ================= */
+function dl(href,name){const a=document.createElement("a");a.href=href;a.download=name;a.click();}
+$("bJson").onclick=()=>{
+  const data={app:"NetPlanner",v:7,lang:LANG,family:FAM,domain:S.domain,linkCidr:S.linkCidr,
+    base:{ip:fmtIp(S.base.start),cidr:S.base.cidr},
+    manual:S.manual.map(m=>({id:m.id,name:m.name,owner:m.owner,mode:m.mode,val:m.val,startIp:m.startIp,reserved:m.reserved})),
+    nodes:[...S.nodes.values()].map(n=>({id:n.id,type:n.type,name:n.name,host:n.host,
+      parent:n.parent?n.parent.id:null,x:Math.round(n.x),y:Math.round(n.y),ov:n.ov}))};
+  dl(URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"})),"topologia.json");};
+$("bImp").onclick=()=>$("fIn").click();
+$("fIn").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);
+    $("fam").value=String(d.family||4);setFam(d.family||4);
+    if(d.lang&&I18N[d.lang]){$("lang").value=d.lang;LANG=d.lang;}
+    cidrIn.min=FAM===4?8:16;cidrIn.max=FAM===4?30:126;cidrIn.value=d.base.cidr;
+    S.domain=d.domain||"corp.local";S.base.cidr=+d.base.cidr;
+    S.linkCidr=d.linkCidr||(FAM===4?30:126);$("lkIn").value=S.linkCidr;
+    S.manual=(d.manual||[]).map(m=>({...m,calc:null}));MID=S.manual.reduce((s,m)=>Math.max(s,m.id),0);
+    const v=parseIP(d.base.ip);S.base.start=(v??0n)&maskOf(S.base.cidr);
+    ipIn.value=fmtIp(S.base.start);cidrOut.textContent="/"+S.base.cidr;mkBase.value=baseMaskStr();
+    clearNodes();
+    d.nodes.forEach(x=>{UID=Math.max(UID,x.id);
+      const m=x.name.match(/-(\d+)$/);if(m)nameCnt[x.type]=Math.max(nameCnt[x.type]||0,+m[1]);
+      S.nodes.set(x.id,{id:x.id,type:x.type,name:x.name,host:x.host||x.name.toLowerCase(),
+        parent:null,children:[],x:x.x,y:x.y,calc:{},ov:x.ov||{},el:null});});
+    d.nodes.forEach(x=>{const n=S.nodes.get(x.id);
+      if(x.parent&&S.nodes.has(x.parent)){n.parent=S.nodes.get(x.parent);n.parent.children.push(n);}else S.root=n;});
+    S.mkSel=S.root?.id??null;
+    resetManForm();applyLang();recompute();fit();
+  }catch(err){alert("JSON inválido: "+err.message);}
+  e.target.value="";};
+  rd.readAsText(f);});
+$("bPng").onclick=()=>{
+  const ns=[...S.nodes.values()];if(!ns.length)return;
+  const cs=getComputedStyle(document.documentElement),V=v=>cs.getPropertyValue(v).trim();
+  const C={bg:V("--bg"),card:V("--card"),line:V("--line"),teal:V("--teal"),tealD:V("--teal-d"),tealL:V("--teal-l"),ink:V("--ink"),blue:V("--blue"),red:V("--red")};
+  const PAD=70,HW=58,HH=46;
+  const xs=ns.map(n=>n.x),ys=ns.map(n=>n.y);
+  const minX=Math.min(...xs)-HW-PAD,minY=Math.min(...ys)-HH-PAD;
+  const W=Math.max(...xs)+HW+PAD-minX,H=Math.max(...ys)+HH+PAD-minY;
+  const T=(x,y)=>[x-minX,y-minY];
+  let g=`<rect width="${W}" height="${H}" fill="${C.bg}"/>`;
+  for(const n of ns)if(n.parent){const p=n.parent,[px,py]=T(p.x,p.y),[cx,cy]=T(n.x,n.y);
+    g+=`<path d="M${px},${py} C${px},${py+(cy-py)/2} ${cx},${cy-(cy-py)/2} ${cx},${cy}" fill="none" stroke="${C.blue}" stroke-width="2"/>`;
+    const lb=S.edgeIps.get(n.id);
+    if(lb)g+=`<text x="${(px+cx)/2+6}" y="${(py+cy)/2-6}" font-family="monospace" font-size="10" fill="${C.blue}">${lb}</text>`;}
+  for(const n of ns){const[x,y]=T(n.x,n.y);
+    g+=`<g transform="translate(${x},${y})">
+      <rect x="-50" y="-42" width="100" height="86" rx="8" fill="${C.card}" stroke="${n.calc.out?C.red:n===S.sel?C.teal:C.line}" stroke-width="2"/>
+      <circle cx="0" cy="-16" r="15" fill="${C.tealL}"/>
+      <g style="color:${C.tealD}" transform="translate(-11,-27) scale(0.92)"><use href="#${TYPES[n.type].i}" xlink:href="#${TYPES[n.type].i}"/></g>
+      <text y="12" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="${C.ink}">${n.name}</text>
+      <text y="24" text-anchor="middle" font-family="monospace" font-size="8.5" fill="${C.tealD}">${n.calc.ip!=null?fmtIp(n.calc.ip):""}</text>
+      ${n.type==="router"&&n.calc.block?`<rect x="-30" y="28" width="60" height="12" rx="6" fill="${C.teal}"/><text y="37" text-anchor="middle" font-family="monospace" font-size="8" fill="#fff">${fmtIp(n.calc.block.start)}/${cidrOfSize(n.calc.block.size)}</text>`:""}
+      </g>`;}
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${$("sprite").innerHTML}</defs>${g}</svg>`;
+  const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+  const img=new Image();
+  img.onload=()=>{const c=document.createElement("canvas");c.width=W*2;c.height=H*2;
+    const ctx=c.getContext("2d");ctx.scale(2,2);ctx.drawImage(img,0,0,W,H);
+    URL.revokeObjectURL(url);dl(c.toDataURL("image/png"),"topologia.png");};
+  img.src=url;};
+
+/* ================= inicialização: sempre o exemplo ================= */
+try{const th=localStorage.getItem("np-theme");setTheme(th&&th==="dark"?"dark":"light");
+    const lg=localStorage.getItem("np-lang");if(lg&&I18N[lg]){$("lang").value=lg;LANG=lg;}}catch(e){}
+setFam(4);setBaseDefaults();S.base.start=parseV4("192.168.0.0");mkBase.value=baseMaskStr();
+S.root=newNode("router",null,0,0);S.mkSel=S.root.id;
+const sw=newNode("switch",S.root,-260,120),ap=newNode("ap",S.root,-160,-200);
+newNode("pc",sw,-430,60);newNode("pc",sw,-430,180);newNode("pc",sw,-300,280);
+newNode("laptop",ap,-300,-300);newNode("tablet",ap,-140,-340);
+newNode("phone",S.root,60,-220);newNode("phone",S.root,220,-140);newNode("phone",S.root,300,20);
+newNode("camera",S.root,-60,240);newNode("printer",S.root,120,-60);newNode("server",S.root,240,180);
+newNode("ups",S.root,60,320);
+const r2=newNode("router",S.root,420,-60);newNode("pc",r2,560,-140);newNode("pc",r2,560,20);
+applyLang();recompute();layout();fit();
+</script>
+</body>
+</html>
